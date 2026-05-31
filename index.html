@@ -1,0 +1,2972 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>空运报价系统</title>
+<style>
+/* ═══════════════════ 变量 ═══════════════════ */
+:root {
+  --blue-50:#eff6ff; --blue-100:#dbeafe; --blue-200:#bfdbfe; --blue-300:#93c5fd;
+  --blue-400:#60a5fa; --blue-500:#3b82f6; --blue-600:#2563eb; --blue-700:#1d4ed8;
+  --blue-800:#1e40af; --blue-900:#1e3a8a;
+  --slate-50:#f8fafc; --slate-100:#f1f5f9; --slate-200:#e2e8f0; --slate-300:#cbd5e1;
+  --slate-400:#94a3b8; --slate-500:#64748b; --slate-600:#475569; --slate-700:#334155;
+  --slate-800:#1e293b;
+  --white:#ffffff;
+  --red-500:#ef4444; --red-600:#dc2626; --red-700:#b91c1c; --red-50:#fef2f2;
+  --green-500:#22c55e; --green-600:#16a34a; --green-700:#15803d;
+  --green-50:#f0fdf4; --green-100:#dcfce7;
+  --amber-500:#f59e0b; --amber-600:#d97706;
+  --radius:8px; --radius-sm:6px; --radius-lg:12px;
+  --shadow-sm:0 1px 2px rgba(0,0,0,0.05);
+  --shadow:0 1px 3px rgba(0,0,0,0.08),0 1px 2px rgba(0,0,0,0.06);
+  --shadow-md:0 4px 6px rgba(0,0,0,0.07),0 2px 4px rgba(0,0,0,0.06);
+  --shadow-lg:0 10px 25px rgba(0,0,0,0.10);
+}
+*{margin:0;padding:0;box-sizing:border-box;}
+body{
+  font-family:'PingFang SC','Microsoft YaHei','Segoe UI','Helvetica Neue',sans-serif;
+  background:var(--slate-50); color:var(--slate-700); min-height:100vh; line-height:1.5;
+}
+
+/* ═══════════ 登录页 ═══════════ */
+#login-screen{
+  position:fixed;inset:0;
+  background:linear-gradient(135deg,var(--blue-900) 0%,var(--blue-700) 50%,var(--blue-600) 100%);
+  display:flex;align-items:center;justify-content:center;z-index:1000;
+}
+.login-bg-pattern{
+  position:absolute;inset:0;opacity:.06;
+  background-image:radial-gradient(circle at 20% 50%,#fff 1px,transparent 1px),
+    radial-gradient(circle at 80% 20%,#fff 1px,transparent 1px),
+    radial-gradient(circle at 50% 80%,#fff 1px,transparent 1px);
+  background-size:60px 60px, 80px 80px, 50px 50px;
+}
+.login-card{
+  position:relative;z-index:1;
+  background:var(--white);border-radius:var(--radius-lg);
+  padding:44px 40px;width:400px;box-shadow:var(--shadow-lg);
+  text-align:center;
+}
+.login-logo{
+  width:56px;height:56px;margin:0 auto 16px;
+  background:linear-gradient(135deg,var(--blue-500),var(--blue-700));
+  border-radius:14px;display:flex;align-items:center;justify-content:center;
+  font-size:24px;color:#fff;box-shadow:0 4px 12px rgba(37,99,235,0.35);
+}
+.login-title{font-size:20px;font-weight:700;color:var(--slate-800);margin-bottom:4px;letter-spacing:.5px;}
+.login-sub{font-size:13px;color:var(--slate-400);margin-bottom:28px;}
+.login-card input{
+  width:100%;padding:11px 14px;
+  background:var(--slate-50);border:1.5px solid var(--slate-200);border-radius:var(--radius-sm);
+  color:var(--slate-700);font-size:14px;margin-bottom:12px;outline:none;
+  transition:border-color .2s,box-shadow .2s;
+}
+.login-card input::placeholder{color:var(--slate-300);}
+.login-card input:focus{border-color:var(--blue-500);box-shadow:0 0 0 3px rgba(59,130,246,0.12);}
+.login-btn{
+  width:100%;padding:12px;margin-top:6px;
+  background:linear-gradient(135deg,var(--blue-500),var(--blue-600));
+  border:none;border-radius:var(--radius-sm);color:#fff;font-size:15px;
+  font-weight:600;cursor:pointer;transition:all .15s;
+}
+.login-btn:hover{background:linear-gradient(135deg,var(--blue-600),var(--blue-700));transform:translateY(-1px);box-shadow:0 4px 12px rgba(37,99,235,0.3);}
+.login-btn:active{transform:translateY(0);}
+.login-error{
+  background:var(--red-50);border:1px solid #fecaca;border-radius:var(--radius-sm);
+  color:var(--red-600);font-size:13px;padding:8px 12px;margin-top:12px;display:none;
+}
+.login-hint{margin-top:18px;font-size:12px;color:var(--slate-400);}
+
+/* ═══════════ 主应用 ═══════════ */
+#app{display:none;flex-direction:column;min-height:100vh;}
+
+/* 顶部导航 */
+.topbar{
+  background:linear-gradient(135deg,var(--blue-700),var(--blue-800));
+  height:54px;display:flex;align-items:center;padding:0 20px;
+  box-shadow:0 2px 8px rgba(0,0,0,0.12);position:sticky;top:0;z-index:100;
+}
+.topbar-brand{display:flex;align-items:center;gap:10px;margin-right:28px;}
+.topbar-icon{
+  width:30px;height:30px;
+  background:linear-gradient(135deg,var(--blue-400),var(--blue-500));
+  border-radius:8px;display:flex;align-items:center;justify-content:center;
+  font-size:14px;color:#fff;
+}
+.topbar-name{font-size:15px;font-weight:700;color:#fff;letter-spacing:.3px;white-space:nowrap;}
+.nav-tabs{display:flex;gap:2px;flex:1;}
+.nav-tab{
+  padding:0 18px;height:54px;display:flex;align-items:center;gap:6px;
+  color:rgba(255,255,255,.65);font-size:13px;font-weight:500;cursor:pointer;
+  border-bottom:3px solid transparent;transition:all .2s;white-space:nowrap;user-select:none;
+}
+.nav-tab:hover{color:rgba(255,255,255,.9);background:rgba(255,255,255,.06);}
+.nav-tab.active{color:#fff;border-bottom-color:var(--blue-300);background:rgba(255,255,255,.08);}
+.topbar-right{margin-left:auto;display:flex;align-items:center;gap:10px;}
+.user-badge{display:flex;align-items:center;gap:6px;background:rgba(255,255,255,.12);border-radius:18px;padding:4px 10px 4px 6px;}
+.user-avatar{
+  width:22px;height:22px;border-radius:50%;
+  background:linear-gradient(135deg,var(--blue-400),var(--blue-500));
+  display:flex;align-items:center;justify-content:center;font-size:11px;color:#fff;font-weight:700;
+}
+.user-name{font-size:12px;color:rgba(255,255,255,.85);}
+.role-chip{padding:2px 8px;border-radius:10px;font-size:11px;font-weight:600;}
+.role-chip.superadmin{background:#fbbf24;color:#78350f;}
+.role-chip.admin{background:rgba(255,255,255,.2);color:rgba(255,255,255,.85);}
+.logout-btn{
+  background:none;border:1px solid rgba(255,255,255,.2);border-radius:6px;
+  color:rgba(255,255,255,.6);padding:4px 9px;font-size:11px;cursor:pointer;transition:all .2s;
+}
+.logout-btn:hover{border-color:rgba(255,255,255,.4);color:#fff;}
+
+/* 页面 */
+.page{display:none;flex:1;padding:20px 24px;}
+.page.active{display:block;}
+
+/* 页面标题 */
+.page-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;flex-wrap:wrap;gap:10px;}
+.page-title{font-size:18px;font-weight:700;color:var(--slate-800);}
+.page-subtitle{font-size:12px;color:var(--slate-400);margin-top:2px;}
+
+/* 按钮 */
+.btn-group{display:flex;gap:8px;align-items:center;flex-wrap:wrap;}
+.btn{
+  padding:7px 14px;border-radius:6px;font-size:13px;font-weight:500;cursor:pointer;
+  border:none;transition:all .15s;display:inline-flex;align-items:center;gap:5px;
+}
+.btn-primary{background:var(--blue-600);color:#fff;}
+.btn-primary:hover{background:var(--blue-700);}
+.btn-success{background:var(--green-600);color:#fff;}
+.btn-success:hover{background:var(--green-700);}
+.btn-warning{background:var(--amber-500);color:#fff;}
+.btn-warning:hover{background:var(--amber-600);}
+.btn-danger{background:var(--red-500);color:#fff;}
+.btn-danger:hover{background:var(--red-600);}
+.btn-outline{background:transparent;color:var(--blue-600);border:1.5px solid var(--blue-300);}
+.btn-outline:hover{background:var(--blue-50);border-color:var(--blue-500);}
+.btn-ghost{background:var(--white);color:var(--slate-500);border:1px solid var(--slate-200);}
+.btn-ghost:hover{background:var(--slate-50);border-color:var(--slate-300);}
+.btn:disabled{opacity:.4;cursor:not-allowed;}
+
+/* 工具栏 */
+.toolbar{
+  background:var(--white);border:1px solid var(--slate-200);border-radius:var(--radius);
+  padding:10px 14px;margin-bottom:12px;display:flex;align-items:center;gap:10px;flex-wrap:wrap;
+  box-shadow:var(--shadow-sm);
+}
+.toolbar-label{font-size:13px;color:var(--slate-400);white-space:nowrap;}
+.filter-group{display:flex;gap:8px;flex-wrap:wrap;flex:1;}
+.filter-select,.search-input{
+  padding:6px 10px;border:1px solid var(--slate-200);border-radius:6px;
+  font-size:13px;color:var(--slate-700);background:var(--slate-50);cursor:pointer;outline:none;
+  transition:border-color .2s;
+}
+.filter-select:focus,.search-input:focus{border-color:var(--blue-500);box-shadow:0 0 0 3px rgba(59,130,246,0.1);}
+.search-input{width:160px;cursor:text;}
+.filter-select{appearance:none;-webkit-appearance:none;
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' fill='%2394a3b8'%3E%3Cpath d='M6 8L1 3h10z'/%3E%3C/svg%3E");
+  background-repeat:no-repeat;background-position:right 8px center;padding-right:24px;
+}
+
+/* 状态条 */
+.status-bar{
+  display:flex;align-items:center;gap:14px;padding:8px 14px;
+  background:var(--blue-50);border:1px solid var(--blue-100);
+  border-radius:6px;margin-bottom:12px;font-size:12px;color:var(--slate-500);flex-wrap:wrap;
+}
+.status-bar strong{color:var(--slate-700);}
+.status-dot{width:7px;height:7px;border-radius:50%;display:inline-block;}
+.status-dot.edit{background:var(--green-500);}
+.status-dot.locked{background:var(--slate-400);}
+.status-dot.view{background:var(--slate-300);}
+
+/* 编辑横幅 */
+.alert-info{
+  background:var(--blue-50);border:1px solid var(--blue-200);border-left:4px solid var(--blue-500);
+  border-radius:6px;padding:10px 14px;margin-bottom:12px;font-size:13px;color:var(--blue-700);
+  display:flex;align-items:center;gap:8px;
+}
+
+/* ═══════════ 表格 ═══════════ */
+.table-wrapper{
+  background:var(--white);border-radius:var(--radius);
+  box-shadow:var(--shadow);overflow:hidden;border:1px solid var(--slate-200);
+}
+.table-scroll{overflow:auto;max-height:calc(100vh - 230px);}
+table.quote-table{border-collapse:collapse;font-size:12px;width:100%;}
+.quote-table .group-header th,.quote-table .col-header th{position:sticky;background-clip:padding-box;}
+.quote-table .group-header th{top:0;z-index:10;}
+.quote-table .col-header th{top:32px;z-index:9;}
+
+/* 第1行分组表头 */
+.quote-table .group-header th{
+  background:var(--slate-600);color:#fff;font-size:11px;font-weight:600;
+  padding:5px 6px;text-align:center;border:1px solid rgba(255,255,255,.08);letter-spacing:.3px;
+  vertical-align:middle;
+}
+.quote-table .group-header .gh-base{background:var(--slate-500);}
+.quote-table .group-header .gh-ops2{background:#d4a373;}
+.quote-table .group-header .gh-ops{background:var(--blue-500);}
+.quote-table .group-header .gh-ground{background:#d4a373;}
+.quote-table .group-header .gh-freight{background:#6366f1;}
+.quote-table .group-header .gh-dg{background:#f59e0b;}
+.quote-table .group-header .gh-action{background:var(--slate-500);}
+
+/* 第2行列标题 */
+.quote-table .col-header th{
+  background:#eef2ff;color:var(--slate-600);font-size:11px;font-weight:600;
+  padding:6px 4px;text-align:center;border:1px solid #e0e7ff;line-height:1.4;vertical-align:middle;
+}
+.quote-table .col-header th.col-ops2{background:#fef3e2;}
+.quote-table .col-header th.col-ops{background:#eff6ff;}
+.quote-table .col-header th.col-ground{background:#fef3e2;}
+.quote-table .col-header th.col-freight{background:#eef2ff;}
+.quote-table .col-header th.col-dg{background:#fffbeb;}
+.quote-table .col-header th.col-action{background:#f8fafc;}
+
+/* 数据行 */
+.quote-table tbody td{
+  padding:6px 4px;border:1px solid #e8ecf1;text-align:center;vertical-align:middle;
+  font-size:12px;white-space:normal;word-break:break-word;
+}
+.quote-table tbody tr{transition:background .12s;}
+.quote-table tbody tr:hover td{background:#eff6ff!important;}
+
+/* 分组标签行 */
+.quote-table .dg-label td{
+  background:linear-gradient(135deg,#f87171,#ef4444)!important;color:#fff;font-weight:700;font-size:11px;padding:4px 8px;
+}
+.quote-table .ndg-label td{
+  background:linear-gradient(135deg,#4ade80,#22c55e)!important;color:#fff;font-weight:700;font-size:11px;padding:4px 8px;
+}
+
+/* 行背景 */
+.quote-table .dg-row td{background:#fff5f5;}
+.quote-table .ndg-row td{background:#f8fdf9;}
+
+/* 数值列背景微调 */
+td.num-ground{background:#fef9f0!important;}
+td.num-ops{background:#f0f7ff!important;}
+td.num-freight{background:#f5f3ff!important;}
+td.num-dg{background:#fffbf0!important;color:var(--red-700);}
+td.num-empty{color:var(--slate-300);}
+td.route-cell{color:var(--slate-800);font-weight:500;min-width:65px;}
+td.remark-cell{font-size:11px;color:var(--slate-500);text-align:left;white-space:normal;word-break:break-word;min-width:100px;max-width:180px;line-height:1.5;}
+td.avail-cell{font-weight:500;color:var(--slate-700);}
+td.action-cell{white-space:nowrap;min-width:48px;text-align:center;}
+.icon-btn{cursor:pointer;padding:3px 5px;border-radius:4px;font-size:13px;transition:background .15s,transform .15s;display:inline-block;}
+.icon-btn:hover{background:var(--blue-100);transform:scale(1.15);}
+.icon-sm{cursor:pointer;padding:2px 3px;border-radius:3px;font-size:13px;transition:background .15s;display:inline-block;}
+.icon-sm:hover{background:var(--blue-100);}
+
+/* 隐藏数字输入微调按钮 */
+input[type="number"]::-webkit-inner-spin-button,
+input[type="number"]::-webkit-outer-spin-button { -webkit-appearance:none; margin:0; }
+input[type="number"] { -moz-appearance:textfield; }
+
+/* 可编辑单元格 */
+.editable-input{
+  background:transparent;border:1px solid transparent;outline:none;
+  width:100%;text-align:center;font-size:12px;font-family:inherit;color:inherit;
+  padding:2px 4px;border-radius:3px;transition:border-color .15s;min-width:36px;
+}
+.editable-input:hover{border-color:#cbd5e1;}
+.editable-input:focus{
+  border-color:var(--blue-400)!important;background:var(--white)!important;
+  box-shadow:0 0 0 2px rgba(59,130,246,0.15);
+}
+.editable-input:read-only{cursor:default;}
+.editable-input:read-only:hover{border-color:transparent;}
+.editable-input.route-input{min-width:65px;font-weight:500;color:var(--slate-800);}
+.editable-input.remark-input{text-align:left;font-size:11px;color:var(--slate-500);min-width:100px;max-width:180px;white-space:normal;word-break:break-word;}
+.editable-input.type-select{min-width:48px;}
+
+/* 表头可编辑 — input单行 / textarea多行 */
+.editable-input.header-input{
+  text-align:center;font-weight:600;font-size:inherit;color:inherit;
+  background:transparent;border:1px solid transparent;outline:none;
+  margin:0 auto;padding:3px 2px;vertical-align:middle;
+  transition:border-color .15s;
+}
+.editable-input.header-input:hover{border-color:rgba(255,255,255,.3);}
+.editable-input.header-input:focus{border-color:rgba(255,255,255,.6)!important;}
+input.editable-input.header-input{
+  width:100%;height:28px;line-height:28px;
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
+}
+textarea.editable-input.header-input{
+  display:block;resize:none;overflow:hidden;
+  white-space:normal;word-break:break-word;line-height:1.35;
+  width:100%;min-height:26px;box-sizing:border-box;
+}
+
+/* 脚注 */
+.quote-table tfoot td{
+  background:var(--slate-50);color:var(--slate-400);font-size:11px;padding:8px;
+  border:1px solid var(--slate-200);font-style:italic;
+}
+
+/* ═══════════ 权限配置页 ═══════════ */
+.perm-section{
+  background:var(--white);border-radius:var(--radius);padding:22px 24px;
+  box-shadow:var(--shadow-sm);margin-bottom:18px;border:1px solid var(--slate-200);
+}
+.perm-section h3{
+  font-size:15px;font-weight:600;margin-bottom:14px;color:var(--slate-800);
+  padding-bottom:8px;border-bottom:2px solid var(--blue-100);
+  display:flex;align-items:center;gap:8px;
+}
+.perm-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px;}
+.perm-card{
+  border:1px solid var(--slate-200);border-radius:var(--radius);padding:16px;position:relative;
+}
+.perm-card.super{background:linear-gradient(135deg,#fefce8,#fffbeb);border-color:#fde68a;}
+.perm-card.normal{background:linear-gradient(135deg,#f8fafc,#f1f5f9);}
+.perm-card-badge{
+  position:absolute;top:-10px;right:16px;padding:3px 10px;border-radius:10px;
+  font-size:11px;font-weight:700;color:#fff;
+}
+.perm-card-badge.super{background:var(--amber-500);}
+.perm-card-badge.normal{background:var(--slate-500);}
+.perm-card h4{font-size:14px;margin-bottom:10px;color:var(--slate-700);}
+.perm-card ul{list-style:none;padding:0;}
+.perm-card li{font-size:12px;color:var(--slate-500);padding:4px 0;display:flex;align-items:center;gap:6px;}
+.perm-card li::before{content:'✓';color:var(--green-500);font-weight:700;font-size:13px;}
+
+.perm-table{width:100%;border-collapse:collapse;font-size:13px;}
+.perm-table th{
+  background:var(--slate-50);padding:8px 10px;text-align:left;
+  border-bottom:2px solid var(--slate-200);font-weight:600;color:var(--slate-600);
+}
+.perm-table td{padding:8px 10px;border-bottom:1px solid var(--slate-100);vertical-align:middle;}
+.perm-table input,.perm-table select{
+  border:1px solid var(--slate-200);border-radius:4px;padding:5px 7px;font-size:12px;outline:none;width:100px;
+}
+.perm-table input:focus,.perm-table select:focus{border-color:var(--blue-500);}
+
+/* 备份区域 */
+.backup-section{
+  background:var(--white);border:2px dashed var(--blue-200);border-radius:var(--radius);
+  padding:20px 24px;margin-top:18px;text-align:center;
+}
+.backup-section h3{font-size:15px;font-weight:600;color:var(--slate-700);margin-bottom:4px;}
+.backup-section p{font-size:12px;color:var(--slate-400);margin-bottom:14px;}
+.backup-btns{display:flex;gap:10px;justify-content:center;flex-wrap:wrap;}
+
+/* ═══════════ 对话框 ═══════════ */
+.modal-overlay{
+  position:fixed;inset:0;background:rgba(15,23,42,0.4);backdrop-filter:blur(2px);
+  display:none;align-items:center;justify-content:center;z-index:500;
+}
+.modal-overlay.show{display:flex;}
+.modal{
+  background:var(--white);border-radius:var(--radius-lg);padding:26px 28px 20px;
+  width:380px;box-shadow:var(--shadow-lg);
+}
+.modal.wide{width:660px;max-width:95vw;}
+.modal-title{font-size:16px;font-weight:700;margin-bottom:8px;color:var(--slate-800);}
+.modal-body{font-size:13px;color:var(--slate-500);margin-bottom:16px;}
+.modal-actions{display:flex;gap:8px;justify-content:flex-end;}
+
+.add-form label{display:block;font-size:12px;color:var(--slate-500);margin-bottom:3px;margin-top:10px;}
+.add-form input,.add-form select{
+  width:100%;padding:7px 10px;border:1px solid var(--slate-200);border-radius:5px;font-size:13px;outline:none;
+}
+.add-form input:focus,.add-form select:focus{border-color:var(--blue-500);box-shadow:0 0 0 2px rgba(59,130,246,0.1);}
+.form-row{display:grid;grid-template-columns:1fr 1fr;gap:8px;}
+.form-row3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;}
+.form-section-title{
+  font-size:12px;font-weight:600;color:var(--blue-600);margin:12px 0 6px;
+  padding-bottom:4px;border-bottom:1px solid var(--blue-100);
+}
+
+/* 占位页 */
+.coming-soon{
+  display:flex;flex-direction:column;align-items:center;justify-content:center;
+  min-height:300px;text-align:center;color:var(--slate-400);
+}
+.coming-soon-icon{font-size:56px;margin-bottom:12px;}
+.coming-soon h3{font-size:18px;margin-bottom:6px;color:var(--slate-600);}
+
+/* Toast */
+#toast-container{position:fixed;bottom:20px;right:20px;z-index:9999;display:flex;flex-direction:column;gap:6px;}
+.toast{
+  background:var(--slate-800);color:#fff;padding:10px 16px;border-radius:8px;
+  font-size:13px;box-shadow:var(--shadow-lg);min-width:180px;animation:toastIn .25s ease;
+}
+.toast.success{background:var(--green-600);}
+.toast.error{background:var(--red-500);}
+.toast.warning{background:var(--amber-500);color:#78350f;}
+@keyframes toastIn{from{transform:translateX(30px);opacity:0}to{transform:translateX(0);opacity:1}}
+
+@media(max-width:768px){
+  .topbar{padding:0 10px}.topbar-name{display:none}.nav-tab{padding:0 8px;font-size:12px}
+  .page{padding:12px}.btn{padding:5px 9px;font-size:13px}
+  .perm-grid{grid-template-columns:1fr;}
+}
+
+/* ═══════════ 栏目二：空运报价表单 ═══════════ */
+.project-section{
+  background:var(--white);border-radius:var(--radius);padding:18px 22px;
+  box-shadow:var(--shadow);margin-bottom:16px;border:1px solid var(--slate-200);
+}
+.project-section .ps-title{
+  font-size:16px;font-weight:700;color:var(--slate-800);margin-bottom:14px;
+  padding-bottom:10px;border-bottom:2px solid var(--blue-100);
+  display:flex;align-items:center;justify-content:space-between;
+}
+.sub-shipment-card{
+  background:var(--slate-50);border:1.5px solid var(--slate-200);border-radius:var(--radius);
+  padding:12px 14px;margin-bottom:10px;position:relative;transition:border-color .2s;
+}
+.sub-shipment-card:hover{border-color:var(--blue-300);}
+.sub-shipment-card .ss-header{
+  display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;
+}
+.sub-shipment-card .ss-label{font-size:14px;font-weight:600;color:var(--blue-600);}
+.sub-shipment-card .ss-remove{
+  background:none;border:none;color:var(--slate-400);cursor:pointer;font-size:16px;padding:2px 6px;border-radius:4px;
+}
+.sub-shipment-card .ss-remove:hover{color:var(--red-500);background:var(--red-50);}
+.ss-form-row{display:grid;grid-template-columns:0.8fr 0.8fr 1fr 0.8fr 1.2fr 0.9fr 0.9fr;gap:8px;align-items:end;}
+.ss-sub-id{
+  width:100%;padding:7px 9px;border:1px solid var(--slate-200);border-radius:5px;
+  font-size:12px;color:var(--slate-500);background:var(--slate-50);font-family:monospace;letter-spacing:.5px;
+}
+.ss-form-row select,.ss-form-row input{
+  width:100%;padding:7px 9px;border:1px solid var(--slate-200);border-radius:5px;
+  font-size:13px;outline:none;background:var(--white);
+}
+.ss-form-row select:focus,.ss-form-row input:focus{border-color:var(--blue-500);box-shadow:0 0 0 2px rgba(59,130,246,0.08);}
+.ss-form-row label{font-size:12px;color:var(--slate-500);display:block;margin-bottom:3px;}
+
+/* 项目卡片 */
+.project-card{
+  background:var(--white);border:1px solid var(--slate-200);border-radius:var(--radius);
+  margin-bottom:12px;overflow:hidden;box-shadow:var(--shadow-sm);transition:box-shadow .15s;
+}
+.project-card:hover{box-shadow:var(--shadow-md);}
+.project-card .pc-header{
+  padding:0;display:flex;flex-direction:column;
+  cursor:pointer;user-select:none;background:var(--slate-50);border-bottom:1px solid var(--slate-100);
+}
+.project-card .pc-header.expanded{background:linear-gradient(135deg,var(--blue-50),#eef2ff);border-bottom-color:var(--blue-100);}
+.project-card .pc-row{display:flex;align-items:center;justify-content:space-between;padding:8px 16px;gap:10px;}
+.project-card .pc-row1{border-bottom:1px solid var(--slate-100);}
+.project-card .pc-row1 .pc-field{font-size:15px;color:var(--slate-700);display:flex;align-items:center;gap:4px;}
+.project-card .pc-row1 .pc-field .pc-label{font-size:13px;color:var(--slate-400);font-weight:400;}
+.project-card .pc-row1 .pc-main-id{font-weight:700;font-size:17px;color:var(--blue-700);font-family:monospace;}
+.project-card .pc-row2{font-size:14px;color:var(--slate-500);display:flex;gap:8px;align-items:center;flex-wrap:wrap;justify-content:flex-start;}
+.project-card .pc-row2 .pc-tag{display:inline-flex;align-items:center;gap:3px;padding-right:4px;}
+.project-card .pc-badge{
+  padding:2px 8px;border-radius:10px;font-size:11px;font-weight:600;
+  background:var(--blue-100);color:var(--blue-700);
+}
+.project-card .pc-actions{display:flex;gap:6px;}
+.project-card .pc-body{display:none;padding:16px 20px;}
+.project-card .pc-body.show{display:block;}
+
+/* 项目卡片摘要条 */
+.pc-summary-bar{
+  display:grid;grid-template-columns:1fr 1fr 1fr 1fr 1.4fr;
+  gap:0;margin:0;border-bottom:1px solid var(--slate-100);background:var(--slate-50);
+}
+.pc-summary-bar .psb-item{
+  padding:10px 12px;text-align:center;border-right:1px solid var(--slate-200);
+  display:flex;flex-direction:column;gap:2px;
+}
+.pc-summary-bar .psb-item:last-child{border-right:none;}
+.pc-summary-bar .psb-label{font-size:11px;color:var(--slate-400);font-weight:500;}
+.pc-summary-bar .psb-value{font-size:15px;font-weight:700;color:var(--slate-700);white-space:nowrap;}
+.pc-summary-bar .psb-value.highlight-blue{color:var(--blue-600);}
+.pc-summary-bar .psb-value.highlight-amber{color:var(--amber-600);}
+.pc-summary-bar .psb-total{
+  padding:10px 12px;text-align:center;
+  background:linear-gradient(135deg,var(--blue-50),#eef2ff);
+  display:flex;flex-direction:column;gap:2px;
+}
+.pc-summary-bar .psb-total .psb-label{font-size:11px;color:var(--blue-500);font-weight:600;}
+.pc-summary-bar .psb-total .psb-value{font-size:17px;font-weight:800;color:var(--blue-700);white-space:nowrap;}
+
+/* 计算结果 */
+.result-block{
+  margin-bottom:16px;border:1px solid var(--slate-200);border-radius:var(--radius);overflow:hidden;
+}
+.result-block .rb-title{
+  padding:8px 14px;font-size:14px;font-weight:600;color:var(--slate-700);
+  background:var(--slate-50);border-bottom:1px solid var(--slate-200);
+}
+.result-table{width:100%;border-collapse:collapse;font-size:13px;}
+.result-table th{
+  background:var(--slate-100);padding:6px 8px;text-align:center;font-weight:600;
+  color:var(--slate-600);border:1px solid var(--slate-200);font-size:12px;
+}
+.result-table td{
+  padding:6px 8px;text-align:center;border:1px solid var(--slate-200);
+  vertical-align:middle;white-space:normal;word-break:break-word;
+}
+.result-table td.left{text-align:left;}
+.result-table td.bold{font-weight:600;}
+.result-table td.highlight{background:#fffbeb;font-weight:700;color:#b45309;font-size:14px;}
+.result-table .sub-total td{background:var(--blue-50);font-weight:600;color:var(--blue-700);}
+.result-table .main-total td{
+  background:linear-gradient(135deg,var(--blue-600),var(--blue-700));
+  color:#fff;font-weight:700;font-size:15px;padding:10px 8px;
+}
+.info-note{
+  background:var(--amber-50);border:1px solid #fde68a;border-radius:6px;
+  padding:8px 12px;font-size:12px;color:#92400e;margin-top:10px;line-height:1.5;
+}
+/* 状态标识 */
+
+/* 项目清单表格 */
+.projects-table-wrapper { margin-top:16px; overflow-x:auto; }
+.projects-table { width:100%; border-collapse:collapse; font-size:13px; }
+.projects-table th {
+  background:var(--slate-100); color:var(--slate-600); font-weight:600;
+  padding:8px 10px; text-align:center; border-bottom:2px solid var(--slate-200);
+  white-space:normal; word-break:break-word; vertical-align:middle;
+}
+.projects-table td {
+  padding:7px 10px; border-bottom:1px solid var(--slate-100);
+  vertical-align:middle; white-space:normal; word-break:break-word; text-align:center;
+}
+.projects-table tr.clickable:hover { background:var(--blue-50); cursor:pointer; }
+.projects-table tr.expanded { background:var(--blue-50); }
+.status-dot { display:inline-block; width:8px;height:8px;border-radius:50%;margin-right:4px; }
+.status-dot.待出发 { background:var(--slate-400); }
+.status-dot.延误 { background:var(--red-500); }
+.status-dot.完成 { background:var(--green-500); }
+
+.status-badge{
+  display:inline-block;padding:2px 10px;border-radius:12px;font-size:11px;font-weight:600;margin-left:8px;
+}
+.status-badge.待出发{background:#f8fafc;color:var(--slate-600);border:1px solid var(--slate-200);}
+.status-badge.延误{background:var(--red-50);color:var(--red-700);border:1px solid #fecaca;}
+.status-badge.完成{background:var(--green-50);color:var(--green-700);border:1px solid #bbf7d0;}
+/* 金额tooltip */
+.amount-cell{cursor:help;}
+/* 登录记住我 */
+.login-remember{display:flex;align-items:center;gap:6px;margin:4px 0 12px;font-size:12px;color:var(--slate-400);cursor:pointer;}
+.login-remember input[type="checkbox"]{accent-color:var(--blue-500);width:14px;height:14px;}
+</style>
+<script src="https://cdn.jsdelivr.net/npm/xlsx-js-style@1.2.0/dist/xlsx.bundle.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+</head>
+<body>
+
+<!-- ═══════════ 登录页 ═══════════ -->
+<div id="login-screen">
+  <div class="login-bg-pattern"></div>
+  <div class="login-card" id="login-form">
+    <div class="login-logo">✈</div>
+    <div class="login-title" id="login-title-text">空运报价系统</div>
+    <div class="login-sub">Air Freight Quotation System</div>
+
+    <!-- 登录模式 -->
+    <div id="login-mode">
+      <input type="email" id="login-email" placeholder="邮箱地址" autocomplete="off" />
+      <input type="password" id="login-pass" placeholder="密码" autocomplete="off"
+             onkeydown="if(event.key==='Enter')doLogin()" />
+      <button class="login-btn" onclick="doLogin()">登 录</button>
+      <div style="margin-top:14px;text-align:center">
+        <span style="font-size:13px;color:var(--slate-400)">还没有账号？</span>
+        <button onclick="switchToRegister()" style="background:none;border:none;color:var(--blue-500);cursor:pointer;font-size:13px;font-weight:600;text-decoration:underline">立即注册</button>
+      </div>
+    </div>
+
+    <!-- 注册模式 -->
+    <div id="register-mode" style="display:none">
+      <input type="text" id="reg-username" placeholder="用户名（用于显示）" autocomplete="off" />
+      <input type="email" id="reg-email" placeholder="邮箱地址" autocomplete="off" />
+      <input type="password" id="reg-pass" placeholder="密码（至少6位）" autocomplete="off"
+             onkeydown="if(event.key==='Enter')doRegister()" />
+      <button class="login-btn" onclick="doRegister()">注 册</button>
+      <div style="margin-top:14px;text-align:center">
+        <span style="font-size:13px;color:var(--slate-400)">已有账号？</span>
+        <button onclick="switchToLogin()" style="background:none;border:none;color:var(--blue-500);cursor:pointer;font-size:13px;font-weight:600;text-decoration:underline">返回登录</button>
+      </div>
+    </div>
+
+    <div class="login-error" id="login-error"></div>
+    <div class="login-hint" style="display:none">默认账号：superadmin / super888</div>
+  </div>
+</div>
+
+<!-- ═══════════ 主应用 ═══════════ -->
+<div id="app">
+  <!-- 顶部导航 -->
+  <div class="topbar">
+    <div class="topbar-brand">
+      <div class="topbar-icon">✈</div>
+      <div class="topbar-name">空运报价系统</div>
+    </div>
+    <div class="nav-tabs">
+      <div class="nav-tab active" onclick="switchTab('tab1')" id="nav-tab1">📋 报价查询表</div>
+      <div class="nav-tab" onclick="switchTab('tab2')" id="nav-tab2">📄 空运报价表</div>
+      <div class="nav-tab" onclick="switchTab('tab3')" id="nav-tab3">⚙️ 权限配置</div>
+    </div>
+    <div class="topbar-right">
+      <div class="user-badge">
+        <div class="user-avatar" id="user-avatar">U</div>
+        <span class="user-name" id="user-display-name">用户</span>
+        <span class="role-chip" id="role-chip">-</span>
+      </div>
+      <button class="logout-btn" onclick="doLogout()">退出</button>
+    </div>
+  </div>
+
+  <!-- ═══ 栏目一：报价查询表 ═══ -->
+  <div class="page active" id="tab1">
+    <div class="page-header">
+      <div>
+        <div class="page-title">📋 报价查询表</div>
+        <div class="page-subtitle" id="validity-info">有效期：2025-01-01 至 2025-12-31</div>
+      </div>
+      <div class="btn-group">
+      </div>
+    </div>
+    <div class="alert-info" id="edit-alert" style="display:none">
+      ✏️ <strong>编辑模式</strong> — 点击单元格直接修改数值，修改后点击"保存"按钮保存。表头字段也可编辑。
+    </div>
+
+    <!-- 工具栏 -->
+    <div class="toolbar">
+      <span class="toolbar-label">筛选：</span>
+      <div class="filter-group">
+        <select class="filter-select" id="filter-type" onchange="applyFilters()">
+          <option value="">全部类型</option>
+          <option value="DG">危险品 DG</option>
+          <option value="NDG">普通货 NDG</option>
+        </select>
+        <select class="filter-select" id="filter-route" onchange="applyFilters()">
+          <option value="">全部航线</option>
+        </select>
+        <input class="search-input" id="search-input" placeholder="搜索航线..." oninput="applyFilters()" />
+      </div>
+      <button class="btn btn-outline" onclick="exportToExcel()" style="margin-left:auto">📊 导出Excel</button>
+      <button class="btn btn-warning" onclick="toggleEdit()" id="edit-toggle-btn">✏️ 编辑</button>
+    </div>
+
+    <!-- 状态条 -->
+    <div class="status-bar">
+      <span>数据共 <strong id="total-rows">0</strong> 条</span>
+      <span>当前显示 <strong id="visible-rows">0</strong> 条</span>
+      <span id="last-saved-info" style="display:none">最后保存：<strong id="last-saved-time">-</strong></span>
+      <span style="margin-left:auto"><span class="status-dot locked" id="status-dot"></span> <span id="status-text">已锁定</span></span>
+    </div>
+
+    <!-- 表格 -->
+    <div class="table-wrapper">
+      <div class="table-scroll">
+        <table class="quote-table" id="quote-table">
+          <thead>
+            <!-- 第1行：分组标题 -->
+            <tr class="group-header" id="group-header-row">
+              <th rowspan="2" class="gh-base" style="min-width:45px">货型</th>
+              <th rowspan="2" class="gh-base" style="min-width:70px">线路</th>
+              <th rowspan="2" class="gh-base" style="min-width:45px">币种</th>
+              <th colspan="7" class="gh-ground">
+                <input class="editable-input header-input" data-hfield="group1" readonly value="地面费用" />
+              </th>
+              <th colspan="5" class="gh-freight">
+                <input class="editable-input header-input" data-hfield="group2" readonly value="航司空运费用" />
+              </th>
+              <th colspan="5" class="gh-dg">
+                <input class="editable-input header-input" data-hfield="group3" readonly value="航司危险品费用" />
+              </th>
+              <th rowspan="2" class="gh-base" style="min-width:100px">备注</th>
+              <th rowspan="2" class="gh-action" style="min-width:52px">操作</th>
+            </tr>
+            <!-- 第2行：列标题 -->
+            <tr class="col-header" id="col-header-row">
+              <!-- 地面费用 7列合并 -->
+              <th class="col-ground"><textarea class="editable-input header-input" data-hfield="h_d_min" readonly rows="2">最低地面港杂费</textarea></th>
+              <th class="col-ground"><textarea class="editable-input header-input" data-hfield="h_d_kg" readonly rows="2">地面港杂费单价（/Kg）</textarea></th>
+              <th class="col-ground"><textarea class="editable-input header-input" data-hfield="h_f_min" readonly rows="2">最低地面安检费</textarea></th>
+              <th class="col-ground"><textarea class="editable-input header-input" data-hfield="h_f_kg" readonly rows="2">安检费单价（/Kg）</textarea></th>
+              <th class="col-ground"><textarea class="editable-input header-input" data-hfield="h_h" readonly rows="2">仓库登记费</textarea></th>
+              <th class="col-ground"><textarea class="editable-input header-input" data-hfield="h_i" readonly rows="2">卸货费
+（/主单）</textarea></th>
+              <th class="col-ground"><textarea class="editable-input header-input" data-hfield="h_j" readonly rows="2">出口申报费</textarea></th>
+              <!-- 前空运费用 5列 -->
+              <th class="col-freight"><textarea class="editable-input header-input" data-hfield="h_k" readonly rows="2">最低航司空运费</textarea></th>
+              <th class="col-freight"><textarea class="editable-input header-input" data-hfield="h_l" readonly rows="2">&lt;45Kg
+单价</textarea></th>
+              <th class="col-freight"><textarea class="editable-input header-input" data-hfield="h_m" readonly rows="2">&gt;=45Kg
+单价</textarea></th>
+              <th class="col-freight"><textarea class="editable-input header-input" data-hfield="h_n" readonly rows="2">燃油费单价</textarea></th>
+              <th class="col-freight"><textarea class="editable-input header-input" data-hfield="h_o" readonly rows="2">安检费单价</textarea></th>
+              <!-- 航司危险品费用 5列 -->
+              <th class="col-dg"><textarea class="editable-input header-input" data-hfield="h_p" readonly rows="2">危险品申报费</textarea></th>
+              <th class="col-dg"><textarea class="editable-input header-input" data-hfield="h_q" readonly rows="2">最低危险品操作费</textarea></th>
+              <th class="col-dg"><textarea class="editable-input header-input" data-hfield="h_r" readonly rows="2">危险品操作单价</textarea></th>
+              <th class="col-dg"><textarea class="editable-input header-input" data-hfield="h_s" readonly rows="2">危险品包装单价
+（/箱）</textarea></th>
+              <th class="col-dg"><textarea class="editable-input header-input" data-hfield="h_t" readonly rows="2">航司危险品费用
+（/主单）</textarea></th>
+            </tr>
+          </thead>
+          <tbody id="quote-tbody"></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══ 栏目二：空运报价表 ═══ -->
+  <div class="page" id="tab2">
+    <div class="page-header">
+      <div><div class="page-title">📄 空运报价表</div><div class="page-subtitle">新建项目 → 输入参数 → 自动计算报价</div></div>
+      <div class="btn-group">
+        <button class="btn btn-primary" onclick="showNewProjectForm()">+ 新建项目</button>
+        <button class="btn btn-ghost" onclick="renderProjects()">🔄 刷新</button>
+
+      </div>
+    </div>
+
+    <!-- 新建项目表单 -->
+    <div class="project-section" id="new-project-form" style="display:none;background:#fffbeb;border-color:#fbbf24">
+      <div class="ps-title" style="background:#fef3c7">
+        <span id="project-form-title">📝 新建项目</span>
+        <button class="btn btn-ghost" style="font-size:13px;padding:3px 10px" onclick="hideNewProjectForm()">✕ 收起</button>
+      </div>
+      <div class="add-form" style="padding:0 4px">
+        <div class="form-row3">
+          <div>
+            <label>业务主编号</label>
+            <input type="text" id="pj-id" readonly style="background:var(--slate-50);color:var(--slate-500)" />
+          </div>
+          <div>
+            <label>委托公司名称</label><input type="text" id="pj-company" placeholder="如：XX物流有限公司" /></div>
+          <div><label>主单航司编号</label><input type="text" id="pj-mawb" placeholder="如：KA-2026-00001" /></div>
+        </div>
+        <div class="form-row3" style="margin-top:10px">
+          <div><label>预计出发时间</label><input type="datetime-local" id="pj-departure" /></div>
+          <div><label>航班号</label><input type="text" id="pj-flight" placeholder="如：CA1234" /></div>
+          <div>
+            <label>状态</label>
+            <select id="pj-status">
+              <option value="待出发">待出发</option>
+              <option value="延误">延误</option>
+              <option value="完成">完成</option>
+            </select>
+          </div>
+        </div>
+        <div class="form-section-title" style="display:flex;align-items:center;justify-content:space-between;margin-top:16px">
+          <span>📦 分单信息</span>
+          <button class="btn btn-outline" style="font-size:13px;padding:3px 10px" onclick="addSubShipment()">+ 添加分单</button>
+        </div>
+        <div id="sub-shipments-container"></div>
+        <div style="margin-top:16px;display:flex;gap:10px">
+          <button class="btn btn-primary" onclick="calculateProject()">💾 保存项目并计算报价</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- 项目清单汇总表 -->
+    <div class="projects-table-wrapper" style="margin-top:20px">
+      <table class="projects-table" id="projects-table">
+        <thead>
+          <tr>
+            <th>业务主编号</th>
+            <th>主单航司编号</th>
+            <th>委托公司名称</th>
+            <th>线路</th>
+            <th>航班号</th>
+            <th>预计出发时间</th>
+            <th>状态</th>
+            <th>危险品</th>
+            <th>地面港费</th>
+            <th>航司空运费</th>
+            <th>航司危险品费</th>
+            <th>卸货+危险品<br>(每主单)</th>
+            <th>主单总价格</th>
+            <th>操作</th>
+          </tr>
+        </thead>
+        <tbody id="projects-tbody"></tbody>
+      </table>
+    </div>
+
+  <div id="projects-list"></div>
+  </div>
+
+  <!-- ═══ 栏目三：权限配置 ═══ -->
+  <div class="page" id="tab3">
+    <div class="page-header">
+      <div class="page-title">⚙️ 权限配置</div>
+    </div>
+
+    <!-- 权限说明 -->
+    <div class="perm-section">
+      <h3>📊 权限等级说明</h3>
+      <div class="perm-grid">
+        <div class="perm-card super">
+          <div class="perm-card-badge super">超级管理员</div>
+          <h4>🔑 超级管理员</h4>
+          <ul>
+            <li>查看、编辑全部报价数据</li>
+            <li>修改表头字段名称</li>
+            <li>设置报价有效期</li>
+            <li>新增 / 删除报价行</li>
+            <li>管理所有账号（增删改）</li>
+            <li>数据备份 — 导出 / 导入完整数据</li>
+          </ul>
+        </div>
+        <div class="perm-card normal">
+          <div class="perm-card-badge normal">管理员</div>
+          <h4>👤 管理员</h4>
+          <ul>
+            <li>查看、编辑全部报价数据</li>
+            <li>修改表头字段名称</li>
+            <li>设置报价有效期</li>
+            <li>新增 / 删除报价行</li>
+            <li style="opacity:0.4;text-decoration:line-through">管理账号</li>
+            <li style="opacity:0.4;text-decoration:line-through">数据备份</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+
+    <!-- 账号管理（仅超级管理员可见） -->
+    <div class="perm-section" id="user-mgmt-section">
+      <h3>👥 账号管理</h3>
+      <div style="overflow-x:auto">
+        <table class="perm-table" id="users-table">
+          <thead>
+            <tr>
+              <th>用户名</th>
+              <th>角色</th>
+              <th>密码</th>
+              <th>操作</th>
+            </tr>
+          </thead>
+          <tbody id="users-tbody"></tbody>
+        </table>
+      </div>
+      <div style="margin-top:16px;display:flex;gap:8px;flex-wrap:wrap">
+        <button class="btn btn-primary" onclick="showAddUserModal()">+ 新增账号</button>
+        <button class="btn btn-success" onclick="saveUsers()">💾 保存账号配置</button>
+      </div>
+      <div style="margin-top:12px;padding:8px 12px;background:var(--amber-50);border-radius:6px;font-size:11px;color:#78350f">
+        ⚠️ 账号信息存储在浏览器本地，修改密码后请通知相关用户。超级管理员至少保留一个。
+      </div>
+    </div>
+
+    <!-- 数据备份（仅超级管理员可见） -->
+    <div class="backup-section" id="backup-section">
+      <h3>💿 数据备份</h3>
+      <p>将全部报价数据 + 账号配置导出为备份文件，或从备份文件恢复</p>
+      <div class="backup-btns">
+        <button class="btn btn-primary" onclick="backupExport()">📥 导出备份文件</button>
+        <button class="btn btn-outline" onclick="document.getElementById('backup-file-input').click()">📤 导入备份恢复</button>
+        <input type="file" id="backup-file-input" style="display:none" accept=".json" onchange="backupImport(event)" />
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════ 对话框 ═══════════ -->
+<!-- 新增报价行 -->
+<div class="modal-overlay" id="add-row-modal">
+  <div class="modal wide">
+    <div class="modal-title">➕ 新增报价行</div>
+    <div class="add-form">
+      <div class="form-row">
+        <div><label>货物类型</label><select id="new-type"><option value="DG">危险品 DG</option><option value="NDG">普通货 NDG</option></select></div>
+        <div><label>线路</label><input type="text" id="new-route" placeholder="香港-上海" /></div>
+      </div>
+      <div class="form-row">
+        <div><label>币种</label><select id="new-currency"><option value="RMB">RMB</option><option value="USD">USD</option><option value="EUR">EUR</option></select></div>
+        <div><label>备注</label><input type="text" id="new-remark" placeholder="可选" /></div>
+      </div>
+      <div class="form-section-title">📦 地面费用</div>
+      <div class="form-row">
+        <div><label>最低地面港杂费 MIN</label><input type="number" id="new-d-min" step="0.01" /></div>
+        <div><label>地面港杂费单价/kg</label><input type="number" id="new-d-kg" step="0.01" /></div>
+      </div>
+      <div class="form-row">
+        <div><label>最低地面安检费 XRAY MIN</label><input type="number" id="new-f-min" step="0.01" /></div>
+        <div><label>安检费单价/kg XRAY</label><input type="number" id="new-f-kg" step="0.01" /></div>
+      </div>
+      <div class="form-row3">
+        <div><label>仓库登记费/hawb</label><input type="number" id="new-h" step="0.01" /></div>
+        <div><label>卸货费（每主单）</label><input type="number" id="new-i" step="0.01" /></div>
+        <div><label>出口申报费 URT/hawb</label><input type="number" id="new-j" step="0.01" /></div>
+      </div>
+      <div class="form-section-title">✈ 航司空运费</div>
+      <div class="form-row3">
+        <div><label>最低航司空运费 MIM</label><input type="number" id="new-k" step="0.01" /></div>
+        <div><label>小于45Kg单价 &lt;45KG</label><input type="number" id="new-l" step="0.01" /></div>
+        <div><label>大于等于45Kg单价 ≥45KG</label><input type="number" id="new-m" step="0.01" /></div>
+      </div>
+      <div class="form-row">
+        <div><label>燃油费单价 FUEL</label><input type="number" id="new-n" step="0.01" /></div>
+        <div><label>安检费单价 SSC</label><input type="number" id="new-o" step="0.01" /></div>
+      </div>
+      <div class="form-section-title">⚠️ 航司危险品费用（仅 DG 填写）</div>
+      <div class="form-row3">
+        <div><label>危险品申报费 DGD Fee</label><input type="number" id="new-p" step="0.01" /></div>
+        <div><label>最低危险品操作费/shipment</label><input type="number" id="new-q" step="0.01" /></div>
+        <div><label>危险品操作单价/kg</label><input type="number" id="new-r" step="0.01" /></div>
+      </div>
+      <div class="form-row">
+        <div><label>危险品包装单价/carton</label><input type="number" id="new-s" step="0.01" /></div>
+        <div><label>航司危险品费用（每主单）</label><input type="number" id="new-t" step="0.01" /></div>
+      </div>
+    </div>
+    <div class="modal-actions" style="margin-top:16px">
+      <button class="btn btn-ghost" onclick="closeModal('add-row-modal')">取消</button>
+      <button class="btn btn-primary" onclick="confirmAddRow()">确认新增</button>
+    </div>
+  </div>
+</div>
+
+<!-- 有效期 -->
+<div class="modal-overlay" id="validity-modal">
+  <div class="modal">
+    <div class="modal-title">📅 设置报价有效期</div>
+    <div class="add-form">
+      <label>开始日期</label><input type="date" id="validity-start" />
+      <label>结束日期</label><input type="date" id="validity-end" />
+    </div>
+    <div class="modal-actions" style="margin-top:14px">
+      <button class="btn btn-ghost" onclick="closeModal('validity-modal')">取消</button>
+      <button class="btn btn-primary" onclick="saveValidity()">保存</button>
+    </div>
+  </div>
+</div>
+
+<!-- 新增用户 -->
+<div class="modal-overlay" id="add-user-modal">
+  <div class="modal">
+    <div class="modal-title">👤 新增账号</div>
+    <div class="add-form">
+      <label>用户名</label><input type="text" id="new-username" placeholder="登录用户名" />
+      <label>密码</label><input type="password" id="new-password" placeholder="至少6位" />
+      <label>角色</label>
+      <select id="new-role">
+        <option value="admin">管理员</option>
+        <option value="superadmin">超级管理员</option>
+      </select>
+    </div>
+    <div class="modal-actions" style="margin-top:14px">
+      <button class="btn btn-ghost" onclick="closeModal('add-user-modal')">取消</button>
+      <button class="btn btn-primary" onclick="confirmAddUser()">创建</button>
+    </div>
+  </div>
+</div>
+
+<div id="toast-container"></div>
+
+<script>
+// ═══════════════════════════════════════
+// 默认数据 — 严格按 Excel「栏目1：报价查询表」
+// ═══════════════════════════════════════
+
+const DEFAULT_HEADERS = {
+  group1: '地面费用',
+  group2: '航司空运费用',
+  group3: '航司危险品费用',
+  h_d_min: '最低地面港杂费',
+  h_d_kg: '地面港杂费单价（/Kg）',
+  h_f_min: '最低地面安检费',
+  h_f_kg: '安检费单价（/Kg）',
+  h_h: '仓库登记费',
+  h_i: '卸货费\n（/主单）',
+  h_j: '出口申报费',
+  h_k: '最低航司空运费',
+  h_l: '<45Kg\n单价',
+  h_m: '>=45Kg\n单价',
+  h_n: '燃油费单价',
+  h_o: '安检费单价',
+  h_p: '危险品申报费',
+  h_q: '最低危险品操作费',
+  h_r: '危险品操作单价',
+  h_s: '危险品包装单价\n（/箱）',
+  h_t: '航司危险品费用\n（/主单）',
+  h_u: '备注',
+  h_action: '操作',
+};
+
+const DEFAULT_USERS = [
+  { username: 'superadmin', password: 'super888', role: 'superadmin', display: '超级管理员' },
+  { username: 'admin', password: 'admin888', role: 'admin', display: '管理员' }
+];
+
+// 数据完全来自 Excel，30条（DG 15条 + NDG 15条）
+const DEFAULT_ROWS = [
+  // ── DG 危险品（行4~18）──
+  { id:1, type:'DG', route:'香港-上海', currency:'RMB', d_min:360, d_kg:2.45, f_min:230, f_kg:1, h:317, i:317, j:155, k:585, l:3.19, m:3.15, n:3.7, o:1.8, p:1350, q:126, r:13, s:120, t:550, remark:'注意事项：如货站安检机/飞机限制的卡板尺寸、每托盘/纸箱的限重' },
+  { id:2, type:'DG', route:'香港-北京', currency:'RMB', d_min:360, d_kg:2.45, f_min:230, f_kg:1, h:317, i:317, j:155, k:585, l:5.92, m:5.85, n:3.7, o:1.8, p:1350, q:126, r:16.5, s:120, t:550, remark:'' },
+  { id:3, type:'DG', route:'香港-杭州', currency:'RMB', d_min:360, d_kg:2.45, f_min:230, f_kg:1, h:317, i:317, j:155, k:585, l:5.19, m:5.13, n:3.7, o:1.8, p:1350, q:126, r:11, s:120, t:550, remark:'' },
+  { id:4, type:'DG', route:'香港-成都', currency:'RMB', d_min:360, d_kg:2.45, f_min:230, f_kg:1, h:317, i:317, j:155, k:585, l:5.92, m:5.85, n:3.7, o:1.8, p:1350, q:126, r:11, s:120, t:550, remark:'' },
+  { id:5, type:'DG', route:'香港-南京', currency:'RMB', d_min:360, d_kg:2.45, f_min:230, f_kg:1, h:317, i:317, j:155, k:585, l:5.19, m:5.13, n:3.7, o:1.8, p:1350, q:126, r:11, s:120, t:550, remark:'' },
+  { id:6, type:'DG', route:'香港-大连', currency:'RMB', d_min:360, d_kg:2.45, f_min:230, f_kg:1, h:317, i:317, j:155, k:585, l:20, m:12.7, n:3.7, o:1.8, p:1350, q:126, r:18, s:120, t:550, remark:'' },
+  { id:7, type:'DG', route:'香港-重庆', currency:'RMB', d_min:360, d_kg:2.45, f_min:230, f_kg:1, h:317, i:317, j:155, k:585, l:5.92, m:5.85, n:3.7, o:1.8, p:1350, q:126, r:11, s:120, t:550, remark:'' },
+  { id:8, type:'DG', route:'香港-厦门', currency:'RMB', d_min:360, d_kg:2.45, f_min:230, f_kg:1, h:317, i:317, j:155, k:585, l:4.83, m:4.77, n:3.7, o:1.8, p:1350, q:126, r:6, s:120, t:550, remark:'' },
+  { id:9, type:'DG', route:'香港-青岛', currency:'RMB', d_min:360, d_kg:2.45, f_min:230, f_kg:1, h:317, i:317, j:155, k:585, l:8.65, m:8.56, n:3.7, o:1.8, p:1350, q:126, r:17, s:120, t:550, remark:'' },
+  { id:10, type:'DG', route:'香港-天津', currency:'RMB', d_min:360, d_kg:2.45, f_min:230, f_kg:1, h:317, i:317, j:155, k:585, l:17.35, m:5, n:3.7, o:1.8, p:1350, q:126, r:24, s:120, t:550, remark:'' },
+  { id:11, type:'DG', route:'香港-西安', currency:'RMB', d_min:360, d_kg:2.45, f_min:230, f_kg:1, h:317, i:317, j:155, k:585, l:5.92, m:5.85, n:3.7, o:1.8, p:1350, q:126, r:11, s:120, t:550, remark:'' },
+  { id:12, type:'DG', route:'香港-武汉', currency:'RMB', d_min:360, d_kg:2.45, f_min:230, f_kg:1, h:317, i:317, j:155, k:585, l:5.92, m:5.85, n:3.7, o:1.8, p:1350, q:126, r:11, s:120, t:550, remark:'' },
+  { id:13, type:'DG', route:'香港-长沙', currency:'RMB', d_min:360, d_kg:2.45, f_min:230, f_kg:1, h:317, i:317, j:155, k:585, l:6.05, m:3.75, n:3.7, o:1.8, p:1350, q:126, r:11, s:120, t:550, remark:'' },
+  { id:14, type:'DG', route:'香港-昆明', currency:'RMB', d_min:360, d_kg:2.45, f_min:230, f_kg:1, h:317, i:317, j:155, k:585, l:13, m:8.97, n:3.7, o:1.8, p:1350, q:126, r:16.5, s:120, t:550, remark:'' },
+  { id:15, type:'DG', route:'香港-广州', currency:'RMB', d_min:360, d_kg:2.45, f_min:230, f_kg:1, h:317, i:317, j:155, k:585, l:18, m:2.86, n:3.7, o:1.8, p:1350, q:126, r:16.5, s:120, t:550, remark:'' },
+  // ── NDG 普通货（行19~33）──
+  { id:16, type:'NDG', route:'香港-上海', currency:'RMB', d_min:360, d_kg:2.45, f_min:28, f_kg:0.73, h:317, i:317, j:155, k:405, l:3.19, m:3.15, n:3.7, o:1.8, p:null, q:null, r:null, s:null, t:null, remark:'注意事项：如飞机限制的卡板尺寸、每托盘/纸箱的限重' },
+  { id:17, type:'NDG', route:'香港-北京', currency:'RMB', d_min:360, d_kg:2.45, f_min:28, f_kg:0.73, h:317, i:317, j:155, k:405, l:5.92, m:5.85, n:3.7, o:1.8, p:null, q:null, r:null, s:null, t:null, remark:'' },
+  { id:18, type:'NDG', route:'香港-杭州', currency:'RMB', d_min:360, d_kg:2.45, f_min:28, f_kg:0.73, h:317, i:317, j:155, k:405, l:5.19, m:5.13, n:3.7, o:1.8, p:null, q:null, r:null, s:null, t:null, remark:'' },
+  { id:19, type:'NDG', route:'香港-成都', currency:'RMB', d_min:360, d_kg:2.45, f_min:28, f_kg:0.73, h:317, i:317, j:155, k:405, l:5.92, m:5.85, n:3.7, o:1.8, p:null, q:null, r:null, s:null, t:null, remark:'' },
+  { id:20, type:'NDG', route:'香港-南京', currency:'RMB', d_min:360, d_kg:2.45, f_min:28, f_kg:0.73, h:317, i:317, j:155, k:405, l:5.19, m:5.13, n:3.7, o:1.8, p:null, q:null, r:null, s:null, t:null, remark:'' },
+  { id:21, type:'NDG', route:'香港-大连', currency:'RMB', d_min:360, d_kg:2.45, f_min:28, f_kg:0.73, h:317, i:317, j:155, k:405, l:20, m:12.7, n:3.7, o:1.8, p:null, q:null, r:null, s:null, t:null, remark:'' },
+  { id:22, type:'NDG', route:'香港-重庆', currency:'RMB', d_min:360, d_kg:2.45, f_min:28, f_kg:0.73, h:317, i:317, j:155, k:405, l:5.92, m:5.85, n:3.7, o:1.8, p:null, q:null, r:null, s:null, t:null, remark:'' },
+  { id:23, type:'NDG', route:'香港-厦门', currency:'RMB', d_min:360, d_kg:2.45, f_min:28, f_kg:0.73, h:317, i:317, j:155, k:405, l:4.83, m:4.77, n:3.7, o:1.8, p:null, q:null, r:null, s:null, t:null, remark:'' },
+  { id:24, type:'NDG', route:'香港-青岛', currency:'RMB', d_min:360, d_kg:2.45, f_min:28, f_kg:0.73, h:317, i:317, j:155, k:405, l:8.65, m:8.56, n:3.7, o:1.8, p:null, q:null, r:null, s:null, t:null, remark:'' },
+  { id:25, type:'NDG', route:'香港-天津', currency:'RMB', d_min:360, d_kg:2.45, f_min:28, f_kg:0.73, h:317, i:317, j:155, k:405, l:17.35, m:5, n:3.7, o:1.8, p:null, q:null, r:null, s:null, t:null, remark:'' },
+  { id:26, type:'NDG', route:'香港-西安', currency:'RMB', d_min:360, d_kg:2.45, f_min:28, f_kg:0.73, h:317, i:317, j:155, k:405, l:5.92, m:5.85, n:3.7, o:1.8, p:null, q:null, r:null, s:null, t:null, remark:'' },
+  { id:27, type:'NDG', route:'香港-武汉', currency:'RMB', d_min:360, d_kg:2.45, f_min:28, f_kg:0.73, h:317, i:317, j:155, k:405, l:5.92, m:5.85, n:3.7, o:1.8, p:null, q:null, r:null, s:null, t:null, remark:'' },
+  { id:28, type:'NDG', route:'香港-长沙', currency:'RMB', d_min:360, d_kg:2.45, f_min:28, f_kg:0.73, h:317, i:317, j:155, k:405, l:6.05, m:3.75, n:3.7, o:1.8, p:null, q:null, r:null, s:null, t:null, remark:'' },
+  { id:29, type:'NDG', route:'香港-昆明', currency:'RMB', d_min:360, d_kg:2.45, f_min:28, f_kg:0.73, h:317, i:317, j:155, k:405, l:13, m:8.97, n:3.7, o:1.8, p:null, q:null, r:null, s:null, t:null, remark:'' },
+  { id:30, type:'NDG', route:'香港-广州', currency:'RMB', d_min:360, d_kg:2.45, f_min:28, f_kg:0.73, h:317, i:317, j:155, k:405, l:18, m:2.86, n:3.7, o:1.8, p:null, q:null, r:null, s:null, t:null, remark:'' },
+];
+
+const DEFAULT_DATA = {
+  validity: { start: '2025-01-01', end: '2025-12-31' },
+  headers: JSON.parse(JSON.stringify(DEFAULT_HEADERS)),
+  rows: JSON.parse(JSON.stringify(DEFAULT_ROWS))
+};
+
+// ═══════════ 状态 ═══════════
+let currentUser = null;
+let appData = null;
+let users = [];
+let nextId = 100;
+let editMode = false; // 编辑模式开关：默认锁定，点击"编辑"后解锁
+const HEADERS_VERSION = 3; // 表头版本号：每次修改DEFAULT_HEADERS后递增，强制同步旧缓存
+
+// ═══════════ Supabase 初始化 ═══════════
+const SUPABASE_URL = 'https://aepvhmxuatuhoxqgqxzx.supabase.co';
+const SUPABASE_ANON_KEY = 'sb_publishable_guRDEbvw16fvZoOAwlhrnA_cTy9RGNO';
+const supabase = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+// appData 作为内存缓存（报价查询表数据仍用 localStorage 兼容）
+const KEY_DATA = 'airfreight_data_v3';
+
+let projects = []; // { id, company, mawb, subShipments, results, createdAt }
+let currentProjectId = null; // editing project
+
+// ═══════════ 栏目二：项目管理（Supabase 版本） ═══════════
+async function loadProjects() {
+  try {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) { projects = []; return; }
+
+    const { data: projRows, error } = await supabase
+      .from('projects')
+      .select('*')
+      .eq('user_id', user.id)
+      .order('created_at', { ascending: false });
+
+    if (error) { console.error('loadProjects error:', error); projects = []; return; }
+    if (!projRows) { projects = []; return; }
+
+    // 为每个项目加载分单，转换为旧的 appData 结构
+    const result = [];
+    for (const p of projRows) {
+      const { data: subs } = await supabase
+        .from('sub_shipments')
+        .select('*')
+        .eq('project_id', p.id)
+        .eq('user_id', user.id)
+        .order('sort_order', { ascending: true });
+
+      // 转换回旧的数据结构
+      const projectData = {
+        id: p.id,
+        company: p.company,
+        mawb: p.mawb,
+        departure: p.departure_time,
+        flightNo: p.flight_no,
+        status: p.status,
+        routes: p.routes,
+        hasDG: p.has_dg,
+        subShipments: subs ? subs.map(s => ({
+          subId: s.sub_id,
+          agentId: s.agent_id,
+          goodsDesc: s.goods_desc,
+          remark: s.remark,
+          dgClass: s.dg_class,
+          weight: s.weight,
+          volume: s.volume,
+          cbm: s.cbm,
+          pieces: s.pieces,
+          chargeWeight: s.charge_weight,
+          qData: s.q_data || {}
+        })) : [],
+        results: p.results,
+        createdAt: p.created_at,
+        updatedAt: p.updated_at
+      };
+
+      // 恢复 appData 兼容性（如果项目在 appData 中有额外数据）
+      if (appData && appData[p.id]) {
+        Object.assign(projectData, appData[p.id]);
+      }
+      appData[p.id] = projectData;
+      result.push(projectData);
+    }
+    projects = result;
+  } catch (err) {
+    console.error('loadProjects exception:', err);
+    projects = [];
+  }
+}
+
+async function saveProjects() {
+  // Supabase 版本：项目数据通过 saveProjectToDB 逐个保存
+  // 此函数保留用于向后兼容，实际保存逻辑已移入 calculateProject
+}
+
+async function getNextProjectId() {
+  try {
+    const { data: { user } } = await supabase.auth.getUser();
+    const year = new Date().getFullYear();
+    const prefix = `ZY-${year}-`;
+
+    const { data } = await supabase
+      .from('projects')
+      .select('id')
+      .eq('user_id', user.id)
+      .ilike('id', `${prefix}%`)
+      .order('id', { ascending: true });
+
+    if (!data || data.length === 0) return `${prefix}0001`;
+
+    const existingIds = data.map(r => {
+      const num = parseInt(r.id.split('-')[2]);
+      return isNaN(num) ? 0 : num;
+    }).sort((a, b) => a - b);
+
+    // 回填空缺
+    for (let i = 0; i < existingIds.length; i++) {
+      if (existingIds[i] !== i + 1) {
+        return `${prefix}${String(i + 1).padStart(4, '0')}`;
+      }
+    }
+    return `${prefix}${String(existingIds.length + 1).padStart(4, '0')}`;
+  } catch (err) {
+    console.error('getNextProjectId error:', err);
+    // fallback: use local timestamp-based ID
+    const year = new Date().getFullYear();
+    return `ZY-${year}-${String(Math.floor(Math.random() * 9999) + 1).padStart(4, '0')}`;
+  }
+}
+
+async function showNewProjectForm() {
+  currentProjectId = null;
+  await loadProjects(); // 确保项目数据是最新的
+  document.getElementById('project-form-title').textContent = '📝 新建项目';
+  document.getElementById('pj-id').value = await getNextProjectId();
+  document.getElementById('pj-company').value = '';
+  document.getElementById('pj-mawb').value = '';
+  document.getElementById('sub-shipments-container').innerHTML = '';
+  document.getElementById('new-project-form').style.display = '';
+  // Add default first sub-shipment
+  addSubShipment();
+  document.getElementById('new-project-form').scrollIntoView({ behavior: 'smooth' });
+}
+
+function hideNewProjectForm() {
+  document.getElementById('new-project-form').style.display = 'none';
+}
+
+function addSubShipment() {
+  const container = document.getElementById('sub-shipments-container');
+  const idx = container.children.length + 1;
+  const pjId = document.getElementById('pj-id').value;
+  const subId = pjId + '-' + String(idx).padStart(2, '0');
+  const routes = [...new Set(appData.rows.map(r => r.route))].sort();
+
+  const card = document.createElement('div');
+  card.className = 'sub-shipment-card';
+  card.dataset.idx = idx;
+  card.dataset.subId = subId;
+  card.innerHTML = `
+    <div class="ss-header">
+      <span class="ss-label">分单${idx} <span style="font-size:11px;color:var(--slate-400);font-weight:400;margin-left:6px;font-family:monospace">${subId}</span></span>
+      ${idx > 1 ? '<button class="ss-remove" onclick="this.closest(\'.sub-shipment-card\').remove()" title="移除">✕</button>' : ''}
+    </div>
+    <div class="ss-form-row">
+      <div><label>业务子编号</label><input type="text" class="ss-sub-id" value="${subId}" readonly /></div>
+      <div><label>分单代理编号</label><input type="text" class="ss-agent-id" placeholder="代理编号" /></div>
+      <div><label>公斤数 (Kg)</label><input type="number" class="ss-kg" step="0.01" placeholder="如：120" /></div>
+      <div><label>箱数 (Cartons)</label><input type="number" class="ss-cartons" step="1" placeholder="如：5" /></div>
+      <div><label>线路选择</label>
+        <select class="ss-route">${routes.map(r => `<option value="${r}">${r}</option>`).join('')}</select>
+      </div>
+      <div><label>货物属性</label>
+        <select class="ss-hasDG">
+          <option value="NDG">普通货 NDG</option>
+          <option value="DG">危险品 DG</option>
+        </select>
+      </div>
+      <div><label>靠级优化</label>
+        <select class="ss-leveling">
+          <option value="auto">是（自动选最低）</option>
+          <option value="lt45">否（按<45Kg计）</option>
+          <option value="ge45">否（按≥45Kg计）</option>
+        </select>
+      </div>
+    </div>
+  `;
+  container.appendChild(card);
+}
+
+function getSubShipmentData() {
+  const cards = document.querySelectorAll('#sub-shipments-container .sub-shipment-card');
+  const list = [];
+  cards.forEach((card, i) => {
+    const kg = parseFloat(card.querySelector('.ss-kg').value) || 0;
+    const cartons = parseInt(card.querySelector('.ss-cartons').value) || 0;
+    const route = card.querySelector('.ss-route').value;
+    const isDG = card.querySelector('.ss-hasDG').value === 'DG';
+    const leveling = card.querySelector('.ss-leveling').value;
+    const subId = card.querySelector('.ss-sub-id') ? card.querySelector('.ss-sub-id').value : (card.dataset.subId || ('SUB' + String(i+1).padStart(3,'0')));
+    const agentId = card.querySelector('.ss-agent-id') ? card.querySelector('.ss-agent-id').value.trim() : '';
+    list.push({ no: i + 1, subId, agentId, kg, cartons, route, isDG, leveling });
+  });
+  return list;
+}
+
+/** 核心计算引擎：根据一个分单参数 + 报价行，返回费用明细 */
+function computeSubShipment(sub, quoteRow) {
+  const { kg, cartons, isDG, leveling } = sub;
+  const q = quoteRow;
+  const round2 = v => Math.round(v * 100) / 100;
+
+  // 读表头字段名
+  const hdrs = appData.headers || {};
+
+  // ── 一. 地面港费用 ──
+  const ground1 = Math.max(round2((q.d_kg || 0) * kg), q.d_min || 0); // 地面港杂费
+  const ground2 = Math.max(round2((q.f_kg || 0) * kg), q.f_min || 0); // 安检费用
+  const ground3 = q.h || 0; // 仓库登记费
+  const ground4 = q.j || 0; // 出口申报费
+  const groundTotal = round2(ground1 + ground2 + ground3 + ground4);
+
+  // ── 二. 航司空运费 ──
+  const freightLT45 = kg >= 45 && leveling !== 'lt45' ? 0
+    : Math.max(round2(((q.l || 0) + (q.n || 0) + (q.o || 0)) * kg), q.k || 0);
+  const freightGE45 = Math.max(round2(((q.m || 0) + (q.n || 0) + (q.o || 0)) * kg), q.k || 0);
+  let freightFinal, freightNote = '';
+  if (leveling === 'auto') {
+    freightFinal = kg >= 45 ? freightGE45 : Math.min(freightLT45 || Infinity, freightGE45);
+    if (kg >= 45) freightNote = '（≥45Kg通道）';
+    else if (freightGE45 < freightLT45) freightNote = '（靠级≥45Kg更低）';
+    else freightNote = '（靠级<45Kg更低）';
+  } else if (leveling === 'lt45') {
+    freightFinal = Math.max(round2(((q.l || 0) + (q.n || 0) + (q.o || 0)) * kg), q.k || 0);
+    freightNote = '（按<45Kg）';
+  } else {
+    freightFinal = freightGE45;
+    freightNote = '（按≥45Kg）';
+  }
+  const freightTotal = round2(freightFinal);
+
+  // ── 三. 航司危险品费用 ──
+  let dg1 = 0, dg2 = 0, dg3 = 0, dgTotal = 0;
+  if (isDG) {
+    dg1 = q.p || 0; // 危险品申报费
+    dg2 = Math.max(round2((q.r || 0) * kg), q.q || 0); // 危险品操作费
+    dg3 = round2((q.s || 0) * cartons); // 危险品包装费
+    dgTotal = round2(dg1 + dg2 + dg3);
+  }
+
+  // ── 分单价格 ──
+  const subTotal = round2(groundTotal + freightTotal + dgTotal);
+
+  // 计算方式详情（文本描述 + tooltip）
+  const calcDescNDG = '地面港费+航司空运费';
+  const calcDescDG = '地面港费+航司空运费+危险品操作费';
+  const calcDesc = isDG ? calcDescDG : calcDescNDG;
+
+  // tooltip计算明细
+  const ttl = isDG ? dgTotal : 0;
+  const tooltip = `分单${sub.no} 计算明细：
+━━━━━━━━━━━━━━━━
+一.地面港费用 = ${groundTotal.toFixed(2)}
+  地面港杂费 MAX(${(q.d_kg||0)}×${kg}, ${(q.d_min||0)}) = ${ground1.toFixed(2)}
+  安检费用   MAX(${(q.f_kg||0)}×${kg}, ${(q.f_min||0)}) = ${ground2.toFixed(2)}
+  仓库登记费 = ${ground3.toFixed(2)}
+  出口申报费 = ${ground4.toFixed(2)}
+二.航司空运费 = ${freightTotal.toFixed(2)}
+  费率(${(q.l||0)}+${(q.n||0)}+${(q.o||0)})×${kg}, MIN=${(q.k||0)}
+${kg>=45?'  货运重量≥45Kg,<45Kg通道不适用':''}
+三.分单价格 = ${groundTotal.toFixed(2)}+${freightTotal.toFixed(2)}${isDG?'+'+ttl.toFixed(2):''} = ${subTotal.toFixed(2)}`;
+
+  return {
+    subId: sub.subId, agentId: sub.agentId || '', no: sub.no, kg, cartons, route: sub.route, isDG, leveling,
+    currency: q.currency || 'RMB',
+    ground1, ground2, ground3, ground4, groundTotal,
+    freightLT45, freightGE45, freightFinal, freightNote, freightTotal,
+    dg1, dg2, dg3, dgTotal, subTotal,
+    calcDesc, tooltip,
+    // master-level fields from quote row
+    unloadingFee: q.i || 0,
+    airlineDGFee: isDG ? (q.t || 0) : 0,
+  };
+}
+
+async function calculateProject() {
+  try {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) { showToast('未登录，请先登录', 'error'); return; }
+
+    await loadProjects(); // 确保项目数据是最新的，避免编号冲突
+    const company = document.getElementById('pj-company').value.trim();
+    const mawb = document.getElementById('pj-mawb').value.trim();
+    if (!company) { showToast('请填写委托公司名称', 'error'); return; }
+    if (!mawb) { showToast('请填写主单航司编号', 'error'); return; }
+
+  const departureTime = document.getElementById('pj-departure').value;
+  const status = document.getElementById('pj-status').value;
+
+  const subs = getSubShipmentData();
+  if (!subs.length) { showToast('请至少添加一个分单', 'error'); return; }
+  for (const s of subs) {
+    if (s.kg <= 0) { showToast(`分单${s.no}：公斤数需大于0`, 'error'); return; }
+  }
+
+  // 计算每个分单
+  const subResults = [];
+  for (const sub of subs) {
+    const quoteRow = appData.rows.find(r => r.route === sub.route && r.type === (sub.isDG ? 'DG' : 'NDG'));
+    if (!quoteRow) {
+      showToast(`分单${sub.no}：线路「${sub.route}/${sub.isDG ? 'DG' : 'NDG'}」在报价查询表中未找到`, 'error');
+      return;
+    }
+    subResults.push(computeSubShipment(sub, quoteRow));
+  }
+
+  // 主单汇总费用
+  const mainUnloadingFee = subResults[0].unloadingFee;
+  const mainDGFee = subResults.reduce((sum, r) => sum + r.airlineDGFee, 0);
+  const subSum = subResults.reduce((sum, r) => sum + r.subTotal, 0);
+  const mainTotal = Math.round((subSum + mainUnloadingFee + mainDGFee) * 100) / 100;
+
+  const pjId = document.getElementById('pj-id').value;
+  const flightNo = document.getElementById('pj-flight').value.trim();
+  // 重新生成业务子编号
+  subs.forEach((s, i) => {
+    s.subId = pjId + '-' + String(i + 1).padStart(2, '0');
+  });
+  subResults.forEach((sr, i) => {
+    sr.subId = subs[i].subId;
+  });
+  const project = {
+    id: pjId,
+    company,
+    flightNo,
+    mawb,
+    departureTime,
+    status,
+    subShipments: subs,
+    results: { subResults, mainUnloadingFee, mainDGFee, mainTotal },
+    createdAt: new Date().toISOString(),
+  };
+
+  // If editing existing, update
+    if (currentProjectId) {
+      const idx = projects.findIndex(p => p.id === currentProjectId);
+      if (idx >= 0) projects[idx] = project;
+    } else {
+      projects.push(project);
+    }
+
+    // ── 保存到 Supabase ──
+    const routes = [...new Set(subs.map(s => s.route))].join(', ');
+    const hasDG = subs.some(s => s.isDG);
+
+    // 1. upsert 项目主记录
+    const projectRecord = {
+      id: pjId,
+      user_id: user.id,
+      company,
+      mawb,
+      departure_time: departureTime || null,
+      flight_no: flightNo || null,
+      status,
+      routes,
+      has_dg: hasDG,
+      results: { subResults, mainUnloadingFee, mainDGFee, mainTotal },
+      updated_at: new Date().toISOString()
+    };
+
+    const { error: projError } = await supabase
+      .from('projects')
+      .upsert(projectRecord, { onConflict: 'id,user_id' });
+
+    if (projError) {
+      console.error('Save project error:', projError);
+      showToast('项目保存失败: ' + projError.message, 'error');
+      return;
+    }
+
+    // 2. 先删除旧的分单记录（如果是编辑模式），再插入新的
+    if (currentProjectId) {
+      await supabase.from('sub_shipments')
+        .delete()
+        .eq('project_id', pjId)
+        .eq('user_id', user.id);
+    }
+
+    // 3. 插入新的分单记录
+    if (subs.length > 0) {
+      const subRecords = subs.map((s, idx) => ({
+        user_id: user.id,
+        project_id: pjId,
+        sub_id: s.subId,
+        agent_id: s.agentId || null,
+        departure: null,
+        arrival: null,
+        weight: s.kg,
+        volume: null,
+        cbm: null,
+        pieces: s.cartons,
+        goods_desc: `${s.route} (${s.isDG ? 'DG' : 'NDG'})`,
+        charge_weight: s.kg,
+        price_mode: s.leveling || 'auto',
+        dg_class: s.isDG ? 'DG' : null,
+        remark: '',
+        q_data: { route: s.route, isDG: s.isDG, leveling: s.leveling },
+        sort_order: idx + 1
+      }));
+
+      const { error: subsError } = await supabase
+        .from('sub_shipments')
+        .insert(subRecords);
+
+      if (subsError) {
+        console.error('Save sub_shipments error:', subsError);
+        showToast('分单保存失败: ' + subsError.message, 'error');
+        return;
+      }
+    }
+
+    appData[pjId] = project;
+    appData[pjId] = project;
+    currentProjectId = pjId;
+    hideNewProjectForm();
+    renderProjects();
+    showToast('✅ 报价计算完成并已保存', 'success');
+  } catch (err) {
+    console.error('calculateProject error:', err);
+    showToast('计算过程出错: ' + err.message, 'error');
+  }
+}
+
+function saveProject() {
+  // Save without recalculating — just force calculate
+  calculateProject();
+}
+
+async function deleteProject(id) {
+  if (!confirm('确定删除项目 ' + id + ' 吗？此操作不可恢复。')) return;
+
+  try {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) { showToast('未登录', 'error'); return; }
+
+    // 先删除分单
+    await supabase.from('sub_shipments').delete().eq('project_id', id).eq('user_id', user.id);
+    // 再删除项目
+    const { error } = await supabase.from('projects').delete().eq('id', id).eq('user_id', user.id);
+
+    if (error) { showToast('删除失败: ' + error.message, 'error'); return; }
+
+    delete appData[id];
+    projects = projects.filter(p => p.id !== id);
+    renderProjects();
+    showToast('项目 ' + id + ' 已永久删除', 'warning');
+  } catch (err) {
+    console.error('deleteProject error:', err);
+    showToast('删除失败: ' + err.message, 'error');
+  }
+}
+
+function clearAllProjects() {
+  // Supabase 版本：清空当前用户的所有项目
+  if (!confirm(`⚠️ 确定清空所有项目数据？\n此操作不可恢复！建议先导出备份。`)) return;
+  if (!confirm('⚠️ 再次确认：清空后无法恢复，确定继续？')) return;
+
+  (async () => {
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) { showToast('未登录', 'error'); return; }
+
+      await supabase.from('sub_shipments').delete().eq('user_id', user.id);
+      await supabase.from('projects').delete().eq('user_id', user.id);
+
+      projects = [];
+      appData = {};
+      renderProjects();
+      showToast('已清空所有项目', 'warning');
+    } catch (err) {
+      console.error('clearAllProjects error:', err);
+      showToast('清空失败：' + err.message, 'error');
+    }
+  })();
+}
+
+async function editProject(id) {
+  await loadProjects(); // 确保项目数据是最新的
+  const project = projects.find(p => p.id === id);
+  if (!project) return;
+  currentProjectId = id;
+  document.getElementById('project-form-title').textContent = '✏️ 编辑项目';
+  document.getElementById('pj-id').value = project.id;
+  document.getElementById('pj-company').value = project.company;
+  document.getElementById('pj-mawb').value = project.mawb;
+  document.getElementById('pj-flight').value = project.flightNo || '';
+  document.getElementById('pj-flight').value = project.flightNo || '';
+  document.getElementById('pj-departure').value = project.departureTime || '';
+  document.getElementById('pj-status').value = project.status || '待出发';
+  document.getElementById('sub-shipments-container').innerHTML = '';
+  project.subShipments.forEach(s => {
+    const container = document.getElementById('sub-shipments-container');
+    const idx = container.children.length + 1;
+    const routes = [...new Set(appData.rows.map(r => r.route))].sort();
+    const card = document.createElement('div');
+    card.className = 'sub-shipment-card';
+    const subId = s.subId || (id + '-' + String(idx).padStart(2, '0'));
+    card.dataset.subId = subId;
+    card.innerHTML = `
+      <div class="ss-header">
+        <span class="ss-label">分单${idx} <span style="font-size:11px;color:var(--slate-400);font-weight:400;margin-left:6px;font-family:monospace">${subId}</span></span>
+        ${idx > 1 ? '<button class="ss-remove" onclick="this.closest(\'.sub-shipment-card\').remove()" title="移除">✕</button>' : ''}
+      </div>
+      <div class="ss-form-row">
+        <div><label>业务子编号</label><input type="text" class="ss-sub-id" value="${subId}" readonly /></div>
+        <div><label>分单代理编号</label><input type="text" class="ss-agent-id" value="${s.agentId||''}" placeholder="代理编号" /></div>
+        <div><label>公斤数 (Kg)</label><input type="number" class="ss-kg" step="0.01" value="${s.kg}" /></div>
+        <div><label>箱数 (Cartons)</label><input type="number" class="ss-cartons" step="1" value="${s.cartons}" /></div>
+        <div><label>线路选择</label>
+          <select class="ss-route">${routes.map(r => `<option value="${r}" ${r===s.route?'selected':''}>${r}</option>`).join('')}</select>
+        </div>
+        <div><label>货物属性</label>
+          <select class="ss-hasDG">
+            <option value="NDG" ${!s.isDG?'selected':''}>普通货 NDG</option>
+            <option value="DG" ${s.isDG?'selected':''}>危险品 DG</option>
+          </select>
+        </div>
+        <div><label>靠级优化</label>
+          <select class="ss-leveling">
+            <option value="auto" ${s.leveling==='auto'?'selected':''}>是（自动选最低）</option>
+            <option value="lt45" ${s.leveling==='lt45'?'selected':''}>否（按<45Kg计）</option>
+            <option value="ge45" ${s.leveling==='ge45'?'selected':''}>否（按≥45Kg计）</option>
+          </select>
+        </div>
+      </div>
+    `;
+    container.appendChild(card);
+  });
+  document.getElementById('new-project-form').style.display = '';
+  document.getElementById('new-project-form').scrollIntoView({ behavior: 'smooth' });
+}
+
+
+async function renderProjectsTable() {
+  const tbody = document.getElementById('projects-tbody');
+  if (!tbody) return;
+  await loadProjects();
+  const sorted = [...projects].sort((a, b) => a.id.localeCompare(b.id));
+  let html = '';
+  sorted.forEach(p => {
+    const hasResults = p.results && p.results.subResults;
+    const fmt = v => (v||0).toLocaleString('zh-CN',{minimumFractionDigits:2});
+    const routes = [...new Set((p.subShipments||[]).map(s=>s.route))].join(', ');
+    const hasDG = (p.subShipments||[]).some(s=>s.isDG);
+
+    let groundTotal=0, freightTotal=0, dgTotal=0, mainTotal=0;
+    if (hasResults) {
+      const r = p.results;
+      groundTotal = r.subResults.reduce((s,sr)=>s+sr.groundTotal,0);
+      freightTotal = r.subResults.reduce((s,sr)=>s+sr.freightTotal,0);
+      dgTotal = r.subResults.reduce((s,sr)=>s+sr.dgTotal,0);
+      mainTotal = r.mainTotal||0;
+    }
+    const depTime = p.departureTime ? new Date(p.departureTime).toLocaleString('zh-CN',{month:'2-digit',day:'2-digit',hour:'2-digit',minute:'2-digit'}) : '—';
+
+    html += `<tr class="clickable" onclick="scrollToProjectCard('${p.id}')" data-id="${p.id}">
+      <td>${p.id}</td>
+      <td>${p.mawb||'—'}</td>
+      <td>${p.company||'—'}</td>
+      <td>${routes||'—'}</td>
+      <td>${p.flightNo||'—'}</td>
+      <td>${depTime}</td>
+      <td><span class="status-badge ${p.status||'待出发'}">${p.status||'待出发'}</span></td>
+      <td>${hasDG?'是':'否'}</td>
+      <td>${hasResults?'¥'+fmt(groundTotal):'—'}</td>
+      <td>${hasResults?'¥'+fmt(freightTotal):'—'}</td>
+      <td>${hasResults?(hasDG?'¥'+fmt(dgTotal):'—'):'—'}</td>
+      <td>${hasResults?'¥'+fmt((p.results.mainUnloadingFee||0)+(p.results.mainDGFee||0)):'—'}</td>
+      <td style="font-weight:700;color:var(--blue-700)">${hasResults?'¥'+fmt(mainTotal):'—'}</td>
+      <td style="white-space:nowrap">
+        <button class="btn icon-sm" style="font-size:13px;padding:3px 10px;background:transparent;border:1px solid var(--slate-300);color:var(--slate-600)" onclick="event.stopPropagation();editProject('${p.id}')" title="编辑">✏️</button>
+        <button class="btn icon-sm" style="font-size:13px;padding:3px 10px;background:transparent;border:1px solid var(--slate-300);color:var(--slate-600)" onclick="event.stopPropagation();deleteProject('${p.id}')" title="删除">🗑️</button>
+      </td>
+    </tr>`;
+  });
+  tbody.innerHTML = html || '<tr><td colspan="14" style="text-align:center;color:var(--slate-400);padding:20px">暂无项目</td></tr>';
+}
+
+// 点击清单行跳转到对应项目卡片并展开
+function scrollToProjectCard(id) {
+  const card = document.getElementById('pj-' + id);
+  if (!card) return;
+  // 展开卡片
+  const body = card.querySelector('.pc-body');
+  const header = card.querySelector('.pc-header');
+  if (body && !body.classList.contains('show')) {
+    body.classList.add('show');
+    header.classList.add('expanded');
+  }
+  // 滚动到卡片表头位置，额外向上偏移让业务主编号完整可见
+  const headerRect = header.getBoundingClientRect();
+  const offset = headerRect.top + window.scrollY - 80; // 80px补偿顶部导航栏遮挡
+  window.scrollTo({ top: offset, behavior: 'smooth' });
+  // 高亮闪烁
+  card.style.boxShadow = '0 0 0 3px var(--blue-400)';
+  setTimeout(() => { card.style.boxShadow = ''; }, 1500);
+}
+
+// 为已有项目添加分单
+function addSubToProject(id) {
+  editProject(id);
+  // 等待表单渲染后添加新分单
+  setTimeout(() => addSubShipment(), 100);
+}
+
+async function renderProjects() {
+  await loadProjects();
+  renderProjectsTable(); // 同步更新清单汇总表
+  const container = document.getElementById('projects-list');
+  if (!projects.length) {
+    container.innerHTML = `<div class="coming-soon" style="margin-top:20px">
+      <div class="coming-soon-icon">📭</div>
+      <h3>暂无项目</h3><p>点击「新建项目」创建第一个空运报价</p></div>`;
+    return;
+  }
+
+  let html = '';
+  // Sort by business ID ascending (small to large)
+  const sorted = [...projects].sort((a, b) => a.id.localeCompare(b.id));
+  sorted.forEach(p => {
+    const dgCount = p.subShipments.filter(s => s.isDG).length;
+    const ts = p.createdAt ? new Date(p.createdAt).toLocaleString('zh-CN') : '—';
+    const hasResults = p.results && p.results.subResults;
+    const hasDG = p.subShipments.some(s => s.isDG);
+    const routes = [...new Set(p.subShipments.map(s => s.route))].join(', ');
+    const fmt = v => '¥' + (v || 0).toLocaleString('zh-CN', {minimumFractionDigits:2,maximumFractionDigits:2});
+
+    // 计算总体各部分报价汇总
+    let summaryHtml = '';
+    if (hasResults) {
+      const r = p.results;
+      const totalGround = r.subResults.reduce((s, sr) => s + sr.groundTotal, 0);
+      const totalFreight = r.subResults.reduce((s, sr) => s + sr.freightTotal, 0);
+      const totalDG = r.subResults.reduce((s, sr) => s + sr.dgTotal, 0);
+      summaryHtml = `
+      <div class="pc-summary-bar" onclick="event.stopPropagation();toggleProject('${p.id}')">
+        <div class="psb-item"><span class="psb-label">地面港费合计</span><span class="psb-value highlight-blue">${fmt(totalGround)}</span></div>
+        <div class="psb-item"><span class="psb-label">空运费合计</span><span class="psb-value highlight-blue">${fmt(totalFreight)}</span></div>
+        <div class="psb-item"><span class="psb-label">危险品费合计</span><span class="psb-value ${totalDG > 0 ? 'highlight-amber' : ''}">${totalDG > 0 ? fmt(totalDG) : '—'}</span></div>
+        <div class="psb-item"><span class="psb-label">卸货费 + 主单费用</span><span class="psb-value">${fmt(r.mainUnloadingFee + r.mainDGFee)}</span></div>
+        <div class="psb-total"><span class="psb-label">主单总价格</span><span class="psb-value">${fmt(r.mainTotal)}</span></div>
+      </div>`;
+    }
+
+    const statusLabel = { '待出发': '待出发', '延误': '延误', '完成': '完成' };
+    const pStatus = p.status || '待出发';
+    const depTime = p.departureTime ? new Date(p.departureTime).toLocaleString('zh-CN', {year:'numeric',month:'2-digit',day:'2-digit',hour:'2-digit',minute:'2-digit'}) : '';
+
+    html += `<div class="project-card" id="pj-${p.id}">
+      <div class="pc-header" onclick="toggleProject('${p.id}')">
+        <div class="pc-row pc-row1">
+          <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap">
+            <span class="pc-field"><span class="pc-main-id">${p.id}</span></span>
+            <span class="pc-field"><span class="pc-label">航司编号</span> ${p.mawb||'—'}</span>
+            <span class="pc-field"><span class="pc-label">委托公司</span> ${p.company||'—'}</span>
+            <span class="pc-badge">${hasResults ? '¥' + p.results.mainTotal.toLocaleString('zh-CN',{minimumFractionDigits:2}) : '未计算'}</span>
+          </div>
+          <div class="pc-actions" onclick="event.stopPropagation()">
+            <button class="btn btn-outline" style="font-size:13px;padding:3px 10px" onclick="editProject('${p.id}')">✏️ 编辑</button>
+            <button class="btn btn-danger" style="font-size:13px;padding:3px 10px" onclick="deleteProject('${p.id}')">删除</button>
+          </div>
+        </div>
+        <div class="pc-row pc-row2">
+          <span class="pc-tag">📍 ${routes||'—'}</span>
+          <span class="pc-tag">✈ ${p.flightNo||'—'}</span>
+          <span class="pc-tag">${hasDG ? '⚠️ 有危险品' : '✅ 无危险品'}</span>
+          ${depTime ? `<span class="pc-tag">🚀 ${depTime}</span>` : ''}
+          <span class="status-badge ${pStatus}">${statusLabel[pStatus]}</span>
+        </div>
+      </div>
+      ${summaryHtml}
+      ${hasResults ? renderProjectResults(p) : '<div class="pc-body"><p style="color:var(--slate-400);font-size:13px;text-align:center;padding:20px">尚未计算，点击「编辑」后计算报价</p></div>'}
+    </div>`;
+  });
+  container.innerHTML = html;
+}
+
+function toggleProject(id) {
+  const body = document.querySelector(`#pj-${id} .pc-body`);
+  const header = document.querySelector(`#pj-${id} .pc-header`);
+  if (body) {
+    body.classList.toggle('show');
+    header.classList.toggle('expanded');
+  }
+}
+
+function renderProjectResults(p) {
+  const r = p.results;
+  if (!r || !r.subResults) return '';
+
+  const hdrs = appData.headers || {};
+  const hn = k => { const v = hdrs[k] || ''; return v.includes('\n') ? v.split('\n')[0] : v; };
+  const esc = s => s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+
+  let subTables = '';
+  r.subResults.forEach(sr => {
+    const agentInfo = sr.agentId ? ` | 代理: ${sr.agentId}` : '';
+    subTables += `
+    <div class="result-block">
+      <div class="rb-title">📦 分单${sr.no} (${sr.subId || 'SUB'+String(sr.no).padStart(2,'0')})${agentInfo} — ${sr.route} (${sr.isDG ? '危险品 DG' : '普通货 NDG'}) — ${sr.kg}Kg / ${sr.cartons}箱</div>
+      <table class="result-table">
+        <thead><tr>
+          <th style="width:36%">费用项</th><th style="width:32%">计算方式</th><th style="width:16%">金额 (${sr.currency})</th><th style="width:16%">小计</th>
+        </tr></thead>
+        <tbody>
+          <tr><td class="left bold" colspan="4" style="background:var(--blue-50);color:var(--blue-700)">一. 地面港费用</td></tr>
+          <tr><td class="left">1. 地面港杂费</td><td>MAX(${hn('h_d_kg')||'单价'}×${sr.kg}, ${hn('h_d_min')||'MIN'})</td><td class="amount-cell" title="MAX(${hn('h_d_kg')||'单价'}×${sr.kg}=${sr.ground1.toFixed(2)}, MIN=${hn('h_d_min')||'—'})">¥${sr.ground1.toFixed(2)}</td><td></td></tr>
+          <tr><td class="left">2. 安检费用</td><td>MAX(${hn('h_f_kg')||'单价'}×${sr.kg}, ${hn('h_f_min')||'MIN'})</td><td class="amount-cell" title="MAX(${hn('h_f_kg')||'单价'}×${sr.kg}=${sr.ground2.toFixed(2)}, MIN=${hn('h_f_min')||'—'})">¥${sr.ground2.toFixed(2)}</td><td></td></tr>
+          <tr><td class="left">3. 仓库登记费</td><td>${hn('h_h')||'固定费用'}</td><td class="amount-cell" title="${hn('h_h')||'仓库登记费'} 固定">¥${sr.ground3.toFixed(2)}</td><td></td></tr>
+          <tr><td class="left">4. 出口申报费</td><td>${hn('h_j')||'固定费用'}</td><td class="amount-cell" title="${hn('h_j')||'出口申报费'} 固定">¥${sr.ground4.toFixed(2)}</td><td></td></tr>
+          <tr class="sub-total"><td class="left">地面港费用合计</td><td></td><td></td><td>¥${sr.groundTotal.toFixed(2)}</td></tr>
+
+          <tr><td class="left bold" colspan="4" style="background:var(--blue-50);color:var(--blue-700)">二. 航司空运费</td></tr>
+          <tr><td class="left">航运费(&lt;45Kg)</td><td>MAX((${hn('h_l')||'<45'} + ${hn('h_n')||'燃油'} + ${hn('h_o')||'安检'})×${sr.kg}, ${hn('h_k')||'MIN'})</td><td class="amount-cell" title="(${hn('h_l')||'<45'}+${hn('h_n')||'燃油'}+${hn('h_o')||'安检'})×${sr.kg}=${sr.freightLT45.toFixed(2)}, MIN=${hn('h_k')||'—'}${sr.kg>=45?' | 货运重量≥45Kg,此通道不适用':''}">¥${sr.freightLT45.toFixed(2)}</td><td></td></tr>
+          <tr><td class="left">航运费(≥45Kg)</td><td>MAX((${hn('h_m')||'≥45'} + ${hn('h_n')||'燃油'} + ${hn('h_o')||'安检'})×${sr.kg}, ${hn('h_k')||'MIN'})</td><td class="amount-cell" title="(${hn('h_m')||'≥45'}+${hn('h_n')||'燃油'}+${hn('h_o')||'安检'})×${sr.kg}=${sr.freightGE45.toFixed(2)}, MIN=${hn('h_k')||'—'}">¥${sr.freightGE45.toFixed(2)}</td><td></td></tr>
+          <tr><td class="left">最终航运费</td><td>${sr.freightNote}</td><td class="amount-cell" title="取最优通道: ${sr.freightNote}">¥${sr.freightFinal.toFixed(2)}</td><td></td></tr>
+          <tr class="sub-total"><td class="left">航司空运费合计</td><td></td><td></td><td>¥${sr.freightTotal.toFixed(2)}</td></tr>
+          ${sr.isDG ? `
+          <tr><td class="left bold" colspan="4" style="background:#fffbeb;color:#b45309">三. 航司危险品费用</td></tr>
+          <tr><td class="left">1. 危险品申报费</td><td>${hn('h_p')||'固定费用'}</td><td class="amount-cell" title="${hn('h_p')||'危险品申报费'} 固定">¥${sr.dg1.toFixed(2)}</td><td></td></tr>
+          <tr><td class="left">2. 危险品操作费</td><td>MAX(${hn('h_r')||'单价'}×${sr.kg}, ${hn('h_q')||'MIN'})</td><td class="amount-cell" title="MAX(${hn('h_r')||'单价'}×${sr.kg}=${sr.dg2.toFixed(2)}, MIN=${hn('h_q')||'—'})">¥${sr.dg2.toFixed(2)}</td><td></td></tr>
+          <tr><td class="left">3. 危险品包装费</td><td>${hn('h_s')||'单价'}×${sr.cartons}箱</td><td class="amount-cell" title="${hn('h_s')||'单价'}×${sr.cartons}箱 = ${sr.dg3.toFixed(2)}">¥${sr.dg3.toFixed(2)}</td><td></td></tr>
+          <tr class="sub-total" style="background:#fffbeb!important;color:#b45309!important"><td class="left">危险品费用合计</td><td></td><td></td><td>¥${sr.dgTotal.toFixed(2)}</td></tr>
+          ` : `<tr><td class="left" colspan="4" style="color:var(--slate-400);text-align:center">— 非危险品，无此项费用 —</td></tr>`}
+          <tr class="highlight"><td class="left" style="font-size:13px">📌 分单价格</td><td>${sr.calcDesc}</td><td></td><td class="amount-cell" style="font-size:14px" title="${esc(sr.tooltip)}">¥${sr.subTotal.toFixed(2)}</td></tr>
+        </tbody>
+      </table>
+    </div>`;
+  });
+
+  // 主单汇总
+  const subSum = r.subResults.reduce((sum, sr) => sum + sr.subTotal, 0);
+  const hasDG = r.subResults.some(sr => sr.isDG);
+
+  return `
+  <div class="pc-body show">
+    ${subTables}
+    <div class="result-block" style="border:2px solid var(--blue-400)">
+      <div class="rb-title" style="background:var(--blue-50);font-size:14px">📋 主单汇总 <span style="margin-left:8px;font-size:12px;color:var(--slate-500)">航司编号: <b>${p.mawb || '—'}</b> | 业务主编号: <b>${p.id}</b></span></div>
+      <table class="result-table">
+        <tbody>
+          <tr><td class="left">1.各分单价格合计：</td><td>${r.subResults.map(sr => `分单${sr.no}(${sr.agentId || sr.subId || ''}): ¥${sr.subTotal.toFixed(2)}`).join(' + ')}</td><td class="bold">¥${subSum.toFixed(2)}</td></tr>
+          <tr><td class="left">2.卸货费（/主单）</td><td>固定费用</td><td>¥${r.mainUnloadingFee.toFixed(2)}</td></tr>
+          ${hasDG ? `<tr><td class="left">3. 航司危险品费用（/主单）</td><td>所有分单危险品申报费合计</td><td>¥${r.mainDGFee.toFixed(2)}</td></tr>` : '<tr><td class="left">3. 航司危险品费用（/主单）</td><td colspan="2" style="color:var(--slate-400)">非危险品，无此项费用</td></tr>'}
+          <tr class="main-total"><td class="left">📌 主单总价格</td><td>分单合计 + 卸货费 + ${hasDG ? '危险品费用（主单）' : ''}</td><td>¥${r.mainTotal.toLocaleString('zh-CN', {minimumFractionDigits:2,maximumFractionDigits:2})}</td></tr>
+        </tbody>
+      </table>
+    </div>
+    ${hasDG ? '' : '<div class="info-note">💡 本项目不含危险品货物，无航司危险品费用及主单危险品费用。</div>'}
+  </div>`;
+}
+
+// 权限
+function isSuperAdmin() { return currentUser && currentUser.role === 'superadmin'; }
+function isAdmin() { return currentUser && (currentUser.role === 'admin' || currentUser.role === 'superadmin'); }
+function canManageUsers() { return isSuperAdmin(); }
+function canEdit() { return isAdmin() && editMode; } // 编辑模式开关
+
+// ═══════════ 初始化（Supabase Auth 版本） ═══════════
+async function init() {
+  // 加载本地数据（报价查询表数据仍使用 localStorage）
+  const savedData = localStorage.getItem(KEY_DATA);
+  appData = savedData ? JSON.parse(savedData) : JSON.parse(JSON.stringify(DEFAULT_DATA));
+  if (!appData.headers) {
+    appData.headers = JSON.parse(JSON.stringify(DEFAULT_HEADERS));
+    appData.headersVersion = HEADERS_VERSION;
+    localStorage.setItem(KEY_DATA, JSON.stringify(appData));
+  }
+  if (!appData.headersVersion) {
+    appData.headersVersion = HEADERS_VERSION;
+    localStorage.setItem(KEY_DATA, JSON.stringify(appData));
+  }
+  nextId = Math.max(100, ...appData.rows.map(r => r.id)) + 1;
+
+  // 检查 Supabase Auth 状态
+  const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+  if (sessionError) console.error('getSession error:', sessionError);
+
+  if (session && session.user) {
+    // 已登录，获取用户 profile
+    currentUser = await fetchUserProfile(session.user);
+    document.getElementById('login-screen').style.display = 'none';
+    document.getElementById('app').style.display = 'flex';
+    await finishInit();
+    return;
+  }
+
+  // 未登录，显示登录页
+  document.getElementById('login-screen').style.display = 'flex';
+  document.getElementById('app').style.display = 'none';
+}
+
+async function fetchUserProfile(user) {
+  try {
+    const { data: profile, error } = await supabase
+      .from('profiles')
+      .select('*')
+      .eq('id', user.id)
+      .single();
+
+    if (error || !profile) {
+      // 如果没有 profile，创建一个
+      const newProfile = {
+        id: user.id,
+        username: user.email?.split('@')[0] || 'user',
+        role: 'admin',
+        created_at: new Date().toISOString()
+      };
+      const { error: insertErr } = await supabase.from('profiles').insert(newProfile);
+      if (insertErr) console.error('createProfile error:', insertErr);
+      return { ...newProfile, email: user.email, authUser: user };
+    }
+
+    return { ...profile, email: user.email, authUser: user };
+  } catch (err) {
+    console.error('fetchUserProfile error:', err);
+    return { id: user.id, username: user.email?.split('@')[0] || 'user', role: 'admin', email: user.email, authUser: user };
+  }
+}
+
+async function finishInit() {
+  await loadProjects();
+  setupUI();
+  loadHeadersToDOM();
+  setTimeout(() => document.querySelectorAll('.header-input').forEach(inp => { if (inp.tagName === 'TEXTAREA') autoHeight(inp); }), 50);
+  applyHeaderEditable();
+  renderTable();
+  if (canManageUsers()) renderUsers();
+}
+
+// ═══════════ 登录（Supabase Auth 版本） ═══════════
+async function doLogin() {
+  const email = document.getElementById('login-email').value.trim();
+  const password = document.getElementById('login-pass').value;
+  const errorEl = document.getElementById('login-error');
+
+  if (!email || !password) {
+    errorEl.textContent = '请填写邮箱和密码';
+    errorEl.style.display = 'block';
+    return;
+  }
+
+  try {
+    const { data, error } = await supabase.auth.signInWithPassword({ email, password });
+
+    if (error) {
+      errorEl.textContent = '登录失败：' + error.message;
+      errorEl.style.display = 'block';
+      document.getElementById('login-pass').value = '';
+      return;
+    }
+
+    currentUser = await fetchUserProfile(data.user);
+    document.getElementById('login-error').style.display = 'none';
+    document.getElementById('login-screen').style.display = 'none';
+    document.getElementById('app').style.display = 'flex';
+    await finishInit();
+    showToast('✅ 欢迎回来，' + (currentUser.username || currentUser.email), 'success');
+  } catch (err) {
+    console.error('doLogin error:', err);
+    errorEl.textContent = '登录异常：' + err.message;
+    errorEl.style.display = 'block';
+  }
+}
+
+// 注册新用户
+async function doRegister() {
+  const username = document.getElementById('reg-username').value.trim();
+  const email = document.getElementById('reg-email').value.trim();
+  const password = document.getElementById('reg-pass').value;
+  const errorEl = document.getElementById('login-error');
+
+  if (!username || !email || !password) {
+    errorEl.textContent = '请填写完整信息';
+    errorEl.style.display = 'block';
+    return;
+  }
+  if (password.length < 6) {
+    errorEl.textContent = '密码至少6位';
+    errorEl.style.display = 'block';
+    return;
+  }
+
+  try {
+    // 1. 在 Supabase Auth 中注册用户
+    const { data, error } = await supabase.auth.signUp({
+      email,
+      password,
+      options: {
+        data: { username }
+      }
+    });
+
+    if (error) {
+      errorEl.textContent = '注册失败：' + error.message;
+      errorEl.style.display = 'block';
+      return;
+    }
+
+    // 2. 创建 profile 记录
+    if (data.user) {
+      const { error: profileErr } = await supabase.from('profiles').insert({
+        id: data.user.id,
+        username,
+        role: 'admin',
+        created_at: new Date().toISOString()
+      });
+      if (profileErr) console.error('create profile error:', profileErr);
+    }
+
+    errorEl.style.display = 'none';
+    showToast('✅ 注册成功！请登录', 'success');
+    switchToLogin();
+  } catch (err) {
+    console.error('doRegister error:', err);
+    errorEl.textContent = '注册异常：' + err.message;
+    errorEl.style.display = 'block';
+  }
+}
+
+function switchToRegister() {
+  document.getElementById('login-mode').style.display = 'none';
+  document.getElementById('register-mode').style.display = '';
+  document.getElementById('login-title-text').textContent = '用户注册';
+  document.getElementById('login-error').style.display = 'none';
+}
+
+function switchToLogin() {
+  document.getElementById('register-mode').style.display = 'none';
+  document.getElementById('login-mode').style.display = '';
+  document.getElementById('login-title-text').textContent = '空运报价系统';
+  document.getElementById('login-error').style.display = 'none';
+}
+
+async function doLogout() {
+  try {
+    await supabase.auth.signOut();
+  } catch (err) {
+    console.error('logout error:', err);
+  }
+  currentUser = null;
+  projects = [];
+  appData = null; // reset on logout
+  document.getElementById('login-screen').style.display = 'flex';
+  document.getElementById('app').style.display = 'none';
+  document.getElementById('login-email').value = '';
+  document.getElementById('login-pass').value = '';
+  document.getElementById('login-error').style.display = 'none';
+
+  // 切换回登录模式（如果当前在注册模式）
+  switchToLogin();
+}
+
+// ═══════════ UI ═══════════
+function setupUI() {
+  const disp = currentUser.username || currentUser.email || '用户';
+  document.getElementById('user-display-name').textContent = disp;
+  document.getElementById('user-avatar').textContent = disp.charAt(0).toUpperCase();
+
+  const chip = document.getElementById('role-chip');
+  const labels = { superadmin: '超级管理员', admin: '管理员' };
+  chip.textContent = labels[currentUser.role] || currentUser.role || '用户';
+  chip.className = 'role-chip ' + (currentUser.role || 'admin');
+
+  // 超级管理员标签可见
+  document.getElementById('nav-tab3').style.display = canManageUsers() ? '' : 'none';
+
+  // 权限配置页区块
+  document.getElementById('user-mgmt-section').style.display = canManageUsers() ? '' : 'none';
+  document.getElementById('backup-section').style.display = canManageUsers() ? '' : 'none';
+
+  // 管理员及以上：可编辑
+  const editAlert = document.getElementById('edit-alert');
+  const statusDot = document.getElementById('status-dot');
+  const statusText = document.getElementById('status-text');
+
+  if (isAdmin()) {
+    editAlert.style.display = 'none';
+    statusDot.className = 'status-dot locked';
+    statusText.textContent = '已锁定';
+    setInputsReadonly(!canEdit());
+  }
+  applyHeaderEditable();
+  updateValidityDisplay();
+  updateRoutesFilter();
+}
+
+function setInputsReadonly(readonly) {
+  document.querySelectorAll('.editable-input').forEach(inp => {
+    if (inp.dataset.hfield) return;
+    if (readonly) inp.setAttribute('readonly', '');
+    else inp.removeAttribute('readonly');
+  });
+}
+
+function loadHeadersToDOM() {
+  const hdrs = appData.headers || {};
+  document.querySelectorAll('.editable-input[data-hfield]').forEach(inp => {
+    const key = inp.dataset.hfield;
+    if (key && key in hdrs) {
+      inp.value = hdrs[key] !== null ? hdrs[key] : '';
+    }
+    if (inp.tagName === 'TEXTAREA') { autoHeight(inp); }
+  });
+}
+
+function autoHeight(inp) {
+  if (inp.tagName !== 'TEXTAREA') return;
+  inp.style.height = 'auto';
+  const scrollH = inp.scrollHeight;
+  inp.style.height = Math.max(scrollH, 28) + 'px';
+  // 确保宽度占满父容器
+  inp.style.width = '100%';
+  inp.style.boxSizing = 'border-box';
+}
+
+function applyHeaderEditable() {
+  document.querySelectorAll('.editable-input[data-hfield]').forEach(inp => {
+    if (canEdit()) { inp.removeAttribute('readonly'); } else { inp.setAttribute('readonly', ''); }
+    inp.oninput = function() {
+      if (this.tagName === 'TEXTAREA') autoHeight(this);
+      this.style.borderColor = '#f59e0b'; // 标记已修改
+    };
+  });
+}
+
+// ═══════════ 标签切换 ═══════════
+async function switchTab(tab) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.nav-tab').forEach(t => t.classList.remove('active'));
+  document.getElementById(tab).classList.add('active');
+  document.getElementById('nav-' + tab).classList.add('active');
+  if (tab === 'tab1') { loadHeadersToDOM(); applyHeaderEditable(); setTimeout(() => document.querySelectorAll('.header-input').forEach(inp => { if (inp.tagName === 'TEXTAREA') autoHeight(inp); }), 50); }
+  if (tab === 'tab2') await renderProjects();
+  if (tab === 'tab3' && canManageUsers()) await renderUsers();
+}
+
+// ═══════════ 渲染表格 ═══════════
+function renderTable() {
+  applyFilters();
+}
+
+function applyFilters() {
+  const typeF = document.getElementById('filter-type').value;
+  const routeF = document.getElementById('filter-route').value;
+  const searchF = document.getElementById('search-input').value.trim().toLowerCase();
+
+  let rows = appData.rows;
+  if (typeF) rows = rows.filter(r => r.type === typeF);
+  if (routeF) rows = rows.filter(r => r.route === routeF);
+  if (searchF) rows = rows.filter(r => r.route.toLowerCase().includes(searchF));
+
+  document.getElementById('total-rows').textContent = appData.rows.length;
+  document.getElementById('visible-rows').textContent = rows.length;
+
+  const tbody = document.getElementById('quote-tbody');
+  tbody.innerHTML = '';
+
+  const dgRows = rows.filter(r => r.type === 'DG');
+  const ndgRows = rows.filter(r => r.type === 'NDG');
+
+  function renderGroup(groupRows, type) {
+    if (!groupRows.length) return;
+    const isDG = type === 'DG';
+    const labelClass = isDG ? 'dg-label' : 'ndg-label';
+    const rowClass = isDG ? 'dg-row' : 'ndg-row';
+
+    // 分组标签行
+    const lr = document.createElement('tr');
+    lr.className = labelClass;
+    lr.innerHTML = `<td colspan="22">${isDG ? '⚠️ 危险品 DG 货物（含DG附加费）' : '✅ 普通货 NDG 货物（不含DG附加费）'}</td>`;
+    tbody.appendChild(lr);
+
+    groupRows.forEach(row => {
+      const tr = document.createElement('tr');
+      tr.className = rowClass;
+      tr.dataset.id = row.id;
+
+      const val = (field, cls = '') => {
+        const v = row[field];
+        const display = (v === null || v === undefined || v === '') ? '' : String(v);
+        const step = (typeof v === 'number' && v % 1 !== 0) ? 'step="0.01"' : 'step="any"';
+        const ro = !canEdit() ? 'readonly' : '';
+        return `<input class="editable-input ${cls}" type="number" ${step} value="${display}" data-id="${row.id}" data-field="${field}" ${ro} />`;
+      };
+      const vtxt = (field, cls = '') => {
+        const v = row[field] || '';
+        const ro = !canEdit() ? 'readonly' : '';
+        return `<input class="editable-input ${cls}" type="text" value="${v}" data-id="${row.id}" data-field="${field}" ${ro} />`;
+      };
+
+      const typeSel = !canEdit()
+        ? `<input class="editable-input" type="text" value="${row.type}" readonly style="min-width:44px" />`
+        : `<select class="editable-input type-select" data-id="${row.id}" data-field="type" style="min-width:44px">
+             <option value="DG" ${row.type==='DG'?'selected':''}>DG</option>
+             <option value="NDG" ${row.type==='NDG'?'selected':''}>NDG</option>
+           </select>`;
+
+      const cells = [
+        `<td>${typeSel}</td>`,
+        `<td class="route-cell">${vtxt('route','route-input')}</td>`,
+        `<td class="avail-cell">${vtxt('currency')}</td>`,
+        `<td class="num-ground">${val('d_min')}</td>`,
+        `<td class="num-ground">${val('d_kg')}</td>`,
+        `<td class="num-ground">${val('f_min')}</td>`,
+        `<td class="num-ground">${val('f_kg')}</td>`,
+        `<td class="num-ground">${val('h')}</td>`,
+        `<td class="num-ground">${val('i')}</td>`,
+        `<td class="num-ground">${val('j')}</td>`,
+        `<td class="num-freight">${val('k')}</td>`,
+        `<td class="num-freight">${val('l')}</td>`,
+        `<td class="num-freight">${val('m')}</td>`,
+        `<td class="num-freight">${val('n')}</td>`,
+        `<td class="num-freight">${val('o')}</td>`,
+        `<td class="num-dg">${isDG ? val('p') : '<span class="num-empty">—</span>'}</td>`,
+        `<td class="num-dg">${isDG ? val('q') : '<span class="num-empty">—</span>'}</td>`,
+        `<td class="num-dg">${isDG ? val('r') : '<span class="num-empty">—</span>'}</td>`,
+        `<td class="num-dg">${isDG ? val('s') : '<span class="num-empty">—</span>'}</td>`,
+        `<td class="num-dg">${isDG ? val('t') : '<span class="num-empty">—</span>'}</td>`,
+        `<td class="remark-cell">${vtxt('remark','remark-input')}</td>`,
+        `<td class="action-cell">${canEdit() ? `
+          <span class="icon-sm" title="增加空白行" onclick="addBlankRow(${row.id})">➕</span>
+          <span class="icon-sm" title="删除行" onclick="deleteRow(${row.id})">🗑️</span>
+        ` : `<span style="color:var(--slate-300);font-size:11px">—</span>`}</td>`,
+      ];
+
+      tr.innerHTML = cells.join('');
+      tbody.appendChild(tr);
+    });
+  }
+
+  renderGroup(dgRows, 'DG');
+  renderGroup(ndgRows, 'NDG');
+
+  // 重新绑定事件监听
+  bindCellListeners();
+}
+
+function bindCellListeners() {
+  document.querySelectorAll('.editable-input[data-id]').forEach(inp => {
+    inp.addEventListener('change', function() {
+      if (!canEdit()) return;
+      const id = parseInt(this.dataset.id);
+      const field = this.dataset.field;
+      const row = appData.rows.find(r => r.id === id);
+      if (!row) return;
+      let val = this.value;
+      if (this.type === 'number') {
+        val = val === '' ? null : parseFloat(val);
+        if (val !== null && isNaN(val)) return;
+      } else if (this.tagName === 'SELECT') {
+        val = this.value;
+      }
+      row[field] = val;
+      this.style.borderColor = '#f59e0b';
+    });
+  });
+}
+
+// ═══════════ 编辑模式切换 ═══════════
+function toggleEdit() {
+  if (!isAdmin()) { showToast('没有编辑权限', 'error'); return; }
+  editMode = !editMode;
+  const btn = document.getElementById('edit-toggle-btn');
+  const alert = document.getElementById('edit-alert');
+  const dot = document.getElementById('status-dot');
+  const txt = document.getElementById('status-text');
+  if (editMode) {
+    // 进入编辑模式
+    btn.textContent = '💾 保存';
+    btn.className = 'btn btn-success';
+    alert.style.display = 'flex';
+    dot.className = 'status-dot edit';
+    txt.textContent = '编辑中';
+  } else {
+    // 退出编辑模式（点击"保存"）
+    saveData();
+    btn.textContent = '✏️ 编辑';
+    btn.className = 'btn btn-warning';
+    alert.style.display = 'none';
+    dot.className = 'status-dot locked';
+    txt.textContent = '已锁定';
+  }
+  setInputsReadonly(!canEdit());
+  applyHeaderEditable();
+  renderTable();
+}
+
+// ═══════════ 保存 ═══════════
+function saveData() {
+  if (!isAdmin()) return;
+  saveHeadersFromDOM();
+  appData.headersVersion = HEADERS_VERSION; // 保存版本号
+  localStorage.setItem(KEY_DATA, JSON.stringify(appData));
+  const now = new Date().toLocaleString('zh-CN');
+  document.getElementById('last-saved-info').style.display = '';
+  document.getElementById('last-saved-time').textContent = now;
+  document.querySelectorAll('.editable-input[data-id]').forEach(inp => inp.style.borderColor = '');
+  document.querySelectorAll('.editable-input[data-hfield]').forEach(inp => inp.style.borderColor = '');
+  applyFilters();
+  showToast('✅ 数据已保存', 'success');
+}
+
+function saveHeadersFromDOM() {
+  document.querySelectorAll('.editable-input[data-hfield]').forEach(inp => {
+    const key = inp.dataset.hfield;
+    if (key && appData.headers) appData.headers[key] = inp.value;
+  });
+}
+
+// ═══════════ 清空数据 ═══════════
+function clearAllData() {
+  if (!isAdmin()) { showToast('没有权限', 'error'); return; }
+  if (!confirm('⚠️ 确定要清空"报价查询表"中的所有数据吗？\n此操作不可撤销，表头字段和数据行将被全部清除。')) return;
+  localStorage.removeItem(KEY_DATA);
+  appData = JSON.parse(JSON.stringify(DEFAULT_DATA));
+  appData.headers = JSON.parse(JSON.stringify(DEFAULT_HEADERS));
+  appData.headersVersion = HEADERS_VERSION;
+  nextId = 100;
+  document.getElementById('last-saved-info').style.display = 'none';
+  loadHeadersToDOM();
+  setTimeout(() => document.querySelectorAll('.header-input').forEach(inp => { if (inp.tagName === 'TEXTAREA') autoHeight(inp); }), 50);
+  applyFilters();
+  showToast('✅ 数据已全部清空，可重新设计', 'warning');
+  document.getElementById('filter-type').value = '';
+  document.getElementById('filter-route').value = '';
+  document.getElementById('search-input').value = '';
+}
+
+// ═══════════ 删除行 ═══════════
+function deleteRow(id) {
+  if (!isAdmin()) return;
+  if (!confirm('确定删除此行报价数据？')) return;
+  appData.rows = appData.rows.filter(r => r.id !== id);
+  updateRoutesFilter();
+  applyFilters();
+  showToast('已删除', 'warning');
+}
+
+// ═══════════ 新增行 ═══════════
+function showAddRowModal() {
+  if (!isAdmin()) return;
+  document.getElementById('add-row-modal').classList.add('show');
+}
+
+function confirmAddRow() {
+  const type = document.getElementById('new-type').value;
+  const route = document.getElementById('new-route').value.trim();
+  if (!route) { showToast('请填写线路', 'error'); return; }
+
+  const n = el => { const s = el.value.trim(); return s === '' ? null : parseFloat(s); };
+  const isDG = type === 'DG';
+
+  const newRow = {
+    id: nextId++, type, route,
+    currency: document.getElementById('new-currency').value,
+    d_min: n(document.getElementById('new-d-min')),
+    d_kg: n(document.getElementById('new-d-kg')),
+    f_min: n(document.getElementById('new-f-min')),
+    f_kg: n(document.getElementById('new-f-kg')),
+    h: n(document.getElementById('new-h')),
+    i: n(document.getElementById('new-i')),
+    j: n(document.getElementById('new-j')),
+    k: n(document.getElementById('new-k')),
+    l: n(document.getElementById('new-l')),
+    m: n(document.getElementById('new-m')),
+    n: n(document.getElementById('new-n')),
+    o: n(document.getElementById('new-o')),
+    p: isDG ? n(document.getElementById('new-p')) : null,
+    q: isDG ? n(document.getElementById('new-q')) : null,
+    r: isDG ? n(document.getElementById('new-r')) : null,
+    s: isDG ? n(document.getElementById('new-s')) : null,
+    t: isDG ? n(document.getElementById('new-t')) : null,
+    remark: document.getElementById('new-remark').value.trim(),
+  };
+  appData.rows.push(newRow);
+  updateRoutesFilter();
+  closeModal('add-row-modal');
+  applyFilters();
+  showToast(`✅ 已新增：${type} ${route}`, 'success');
+  document.querySelectorAll('#add-row-modal input').forEach(i => i.value = '');
+}
+
+// ═══════════ 筛选 ═══════════
+function updateRoutesFilter() {
+  const sel = document.getElementById('filter-route');
+  const cur = sel.value;
+  const routes = [...new Set(appData.rows.map(r => r.route))].sort();
+  sel.innerHTML = '<option value="">全部航线</option>';
+  routes.forEach(r => {
+    const opt = document.createElement('option'); opt.value = r; opt.textContent = r;
+    if (r === cur) opt.selected = true;
+    sel.appendChild(opt);
+  });
+}
+
+function resetFilters() {
+  document.getElementById('filter-type').value = '';
+  document.getElementById('filter-route').value = '';
+  document.getElementById('search-input').value = '';
+  applyFilters();
+}
+
+// ═══════════ 有效期 ═══════════
+function updateValidityDisplay() {
+  const v = appData.validity;
+  if (v && v.start && v.end) {
+    document.getElementById('validity-info').textContent = `有效期：${v.start} 至 ${v.end}`;
+  }
+}
+
+function showValidityModal() {
+  if (!isSuperAdmin()) return;
+  const v = appData.validity || {};
+  document.getElementById('validity-start').value = v.start || '';
+  document.getElementById('validity-end').value = v.end || '';
+  document.getElementById('validity-modal').classList.add('show');
+}
+
+function saveValidity() {
+  const s = document.getElementById('validity-start').value;
+  const e = document.getElementById('validity-end').value;
+  if (!s || !e) { showToast('请填写完整日期', 'error'); return; }
+  appData.validity = { start: s, end: e };
+  updateValidityDisplay();
+  closeModal('validity-modal');
+  showToast('有效期已更新', 'success');
+}
+
+// ═══════════ 用户管理（Supabase profiles 版本） ═══════════
+let usersList = []; // 缓存从 profiles 表加载的用户列表
+
+async function renderUsers() {
+  if (!canManageUsers()) return;
+  const tbody = document.getElementById('users-tbody');
+  tbody.innerHTML = '';
+
+  // 从 Supabase profiles 表加载用户列表
+  try {
+    const { data, error } = await supabase
+      .from('profiles')
+      .select('*')
+      .order('created_at', { ascending: true });
+
+    if (error) {
+      console.error('loadUsers error:', error);
+      tbody.innerHTML = '<tr><td colspan="4" style="text-align:center;color:var(--red-500)">加载用户失败</td></tr>';
+      return;
+    }
+
+    usersList = data || [];
+    usersList.forEach((u, idx) => {
+      const tr = document.createElement('tr');
+      const opts = [
+        '<option value="superadmin" ' + (u.role==='superadmin'?'selected':'') + '>超级管理员</option>',
+        '<option value="admin" ' + (u.role==='admin'?'selected':'') + '>管理员</option>',
+      ].join('');
+      tr.innerHTML = `
+        <td>${u.username || '-'}</td>
+        <td><select style="border:1px solid var(--slate-200);border-radius:4px;padding:5px 7px;font-size:12px;width:110px"
+               onchange="updateUserRole('${u.id}', this.value)">${opts}</select></td>
+        <td style="color:var(--slate-400);font-size:11px">—（由 Auth 管理）</td>
+        <td><button class="btn btn-danger" style="padding:3px 8px;font-size:13px"
+               onclick="deleteUserProfile('${u.id}', '${u.username||u.id}')">删除</button></td>
+      `;
+      tbody.appendChild(tr);
+    });
+  } catch (err) {
+    console.error('renderUsers error:', err);
+  }
+}
+
+async function updateUserRole(userId, newRole) {
+  if (!canManageUsers()) return;
+  try {
+    const sc = usersList.filter(u => u.role === 'superadmin').length;
+    const user = usersList.find(u => u.id === userId);
+    if (user && user.role === 'superadmin' && newRole !== 'superadmin' && sc <= 1) {
+      showToast('至少保留一个超级管理员', 'error');
+      renderUsers();
+      return;
+    }
+
+    const { error } = await supabase
+      .from('profiles')
+      .update({ role: newRole })
+      .eq('id', userId);
+
+    if (error) {
+      showToast('更新角色失败：' + error.message, 'error');
+      return;
+    }
+    showToast('角色已更新', 'success');
+    // 如果修改的是当前用户，刷新本地
+    if (currentUser && currentUser.id === userId) {
+      currentUser.role = newRole;
+      setupUI();
+    }
+  } catch (err) {
+    console.error('updateUserRole error:', err);
+    showToast('操作失败：' + err.message, 'error');
+  }
+}
+
+async function deleteUserProfile(userId, username) {
+  const sc = usersList.filter(u => u.role === 'superadmin').length;
+  const user = usersList.find(u => u.id === userId);
+  if (user && user.role === 'superadmin' && sc <= 1) {
+    showToast('至少保留一个超级管理员', 'error'); return;
+  }
+  if (!confirm(`确定删除「${username}」？\n注意：这将从系统中移除该用户的 profile。`)) return;
+
+  try {
+    const { error } = await supabase
+      .from('profiles')
+      .delete()
+      .eq('id', userId);
+
+    if (error) {
+      showToast('删除失败：' + error.message, 'error');
+      return;
+    }
+    showToast('已删除用户', 'warning');
+    await renderUsers();
+  } catch (err) {
+    console.error('deleteUser error:', err);
+    showToast('删除失败：' + err.message, 'error');
+  }
+}
+
+function showAddUserModal() {
+  if (!canManageUsers()) return;
+  document.getElementById('new-username').value = '';
+  document.getElementById('new-password').value = '';
+  document.getElementById('new-role').value = 'admin';
+  document.getElementById('add-user-modal').classList.add('show');
+}
+
+async function confirmAddUser() {
+  const un = document.getElementById('new-username').value.trim();
+  const pw = document.getElementById('new-password').value;
+  const role = document.getElementById('new-role').value;
+  if (!un || !pw) { showToast('请填写完整', 'error'); return; }
+  if (pw.length < 6) { showToast('密码至少6位', 'error'); return; }
+
+  try {
+    // 通过 Supabase Auth 创建新用户
+    // 注意：需要生成临时邮箱或使用其他方式
+    const tempEmail = `${un.replace(/\s/g, '_')}@local.system`; // 临时邮箱格式
+    const { data, error } = await supabase.auth.signUp({
+      email: tempEmail,
+      password: pw,
+      options: { data: { username: un } }
+    });
+
+    if (error) {
+      showToast('创建账号失败：' + error.message, 'error');
+      return;
+    }
+
+    if (data.user) {
+      // 创建 profile
+      const { error: profileErr } = await supabase.from('profiles').insert({
+        id: data.user.id,
+        username: un,
+        role,
+        created_at: new Date().toISOString()
+      });
+      if (profileErr) console.error('createProfile:', profileErr);
+    }
+
+    closeModal('add-user-modal');
+    showToast('✅ 账号已创建', 'success');
+    await renderUsers();
+  } catch (err) {
+    console.error('confirmAddUser error:', err);
+    showToast('创建异常：' + err.message, 'error');
+  }
+}
+
+function saveUsers() {
+  // Supabase 版本：用户数据实时同步到 profiles 表，无需手动保存
+  showToast('✅ 账号配置已自动保存（Supabase 实时同步）', 'success');
+}
+
+// ═══════════ 数据备份（Supabase 版本） ═══════════
+async function backupExport() {
+  if (!canManageUsers()) return;
+  try {
+    const { data: { user } } = await supabase.auth.getUser();
+    // 从 Supabase 加载完整数据用于导出
+    await loadProjects();
+
+    const backup = {
+      version: '4.0-supabase',
+      exportedAt: new Date().toISOString(),
+      data: appData,
+      users: usersList,
+      projects: projects,
+    };
+    const blob = new Blob([JSON.stringify(backup, null, 2)], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `空运报价系统_备份_${new Date().toISOString().slice(0,10)}.json`;
+    a.click();
+    URL.revokeObjectURL(url);
+    showToast('✅ 备份文件已下载', 'success');
+  } catch (err) {
+    console.error('backupExport error:', err);
+    showToast('导出失败：' + err.message, 'error');
+  }
+}
+
+async function backupImport(event) {
+  if (!canManageUsers()) return;
+  const file = event.target.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = async function(e) {
+    try {
+      const backup = JSON.parse(e.target.result);
+      if (!backup.data) {
+        showToast('❌ 无效的备份文件', 'error'); return;
+      }
+      if (!confirm(`确认从备份恢复？\n\n当前数据将被替换。\n备份时间：${backup.exportedAt || '未知'}`)) return;
+
+      // 恢复本地 appData（报价查询表）
+      appData = backup.data;
+      if (!appData.headers) appData.headers = JSON.parse(JSON.stringify(DEFAULT_HEADERS));
+      nextId = Math.max(100, ...appData.rows.map(r => r.id)) + 1;
+      localStorage.setItem(KEY_DATA, JSON.stringify(appData));
+
+      // 恢复项目数据到 Supabase
+      if (backup.projects && Array.isArray(backup.projects) && backup.projects.length > 0) {
+        const { data: { user } } = await supabase.auth.getUser();
+        if (user) {
+          for (const p of backup.projects) {
+            const projectRecord = {
+              id: p.id,
+              user_id: user.id,
+              company: p.company || '',
+              mawb: p.mawb || '',
+              departure_time: p.departureTime || null,
+              flight_no: p.flightNo || null,
+              status: p.status || '待出发',
+              routes: p.routes || '',
+              has_dg: p.hasDG || false,
+              results: p.results || null,
+              created_at: p.createdAt || new Date().toISOString(),
+              updated_at: new Date().toISOString()
+            };
+            await supabase.from('projects').upsert(projectRecord, { onConflict: 'id,user_id' });
+
+            // 恢复分单
+            if (p.subShipments && p.subShipments.length > 0) {
+              const subRecords = p.subShipments.map((s, idx) => ({
+                user_id: user.id,
+                project_id: p.id,
+                sub_id: s.subId || `${p.id}-${idx+1}`,
+                agent_id: s.agentId || null,
+                departure: null,
+                arrival: null,
+                weight: s.kg || s.weight || 0,
+                volume: s.volume || null,
+                cbm: s.cbm || null,
+                pieces: s.cartons || s.pieces || 0,
+                goods_desc: s.goodsDesc || '',
+                charge_weight: s.chargeWeight || s.kg || 0,
+                price_mode: s.price_mode || s.leveling || 'auto',
+                dg_class: s.dgClass || (s.isDG ? 'DG' : null),
+                remark: s.remark || '',
+                q_data: s.qData || {},
+                sort_order: idx + 1
+              }));
+              await supabase.from('sub_shipments').insert(subRecords);
+            }
+          }
+        }
+      }
+
+      updateRoutesFilter();
+      updateValidityDisplay();
+      applyFilters();
+      await loadProjects();
+      if (canManageUsers()) renderUsers();
+      showToast('✅ 数据已从备份恢复', 'success');
+    } catch (err) {
+      console.error('backupImport error:', err);
+      showToast('❌ 文件解析失败或导入出错', 'error');
+    }
+  };
+  reader.readAsText(file);
+  event.target.value = '';
+}
+
+// ═══════════ 导出CSV ═══════════
+function exportToCSV() {
+  const h = appData.headers || DEFAULT_HEADERS;
+  const headers = [
+    '类型','线路','可否',
+    h.h_d_min.replace(/\n/g,' '), h.h_d_kg.replace(/\n/g,' '),
+    h.h_f_min.replace(/\n/g,' '), h.h_f_kg.replace(/\n/g,' '),
+    h.h_h.replace(/\n/g,' '), h.h_i.replace(/\n/g,' '), h.h_j.replace(/\n/g,' '),
+    h.h_k.replace(/\n/g,' '), h.h_l.replace(/\n/g,' '), h.h_m.replace(/\n/g,' '),
+    h.h_n.replace(/\n/g,' '), h.h_o.replace(/\n/g,' '),
+    h.h_p.replace(/\n/g,' '), h.h_q.replace(/\n/g,' '), h.h_r.replace(/\n/g,' '),
+    h.h_s.replace(/\n/g,' '), h.h_t.replace(/\n/g,' '),
+    '备注'
+  ];
+  const fields = [
+    'type','route','currency',
+    'd_min','d_kg','f_min','f_kg','h','i','j',
+    'k','l','m','n','o',
+    'p','q','r','s','t',
+    'remark'
+  ];
+
+  const bom = '\uFEFF';
+  const lines = [
+    headers.join(','),
+    ...appData.rows.map(r => fields.map(f => {
+      const v = r[f];
+      if (v === null || v === undefined) return '';
+      const s = String(v);
+      return s.includes(',') ? `"${s}"` : s;
+    }).join(','))
+  ];
+  const blob = new Blob([bom + lines.join('\n')], { type: 'text/csv;charset=utf-8;' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url; a.download = `报价查询表_${new Date().toISOString().slice(0,10)}.csv`;
+  a.click(); URL.revokeObjectURL(url);
+  showToast('✅ CSV已导出', 'success');
+}
+
+// ═══════════ 导出Excel ═══════════
+function exportToExcel() {
+  if (typeof XLSX === 'undefined') { showToast('❌ xlsx-js-style 库未加载', 'error'); return; }
+  const h = appData.headers || DEFAULT_HEADERS;
+
+  // ── 第1行：分组标题（合并单元格） ──
+  const row1 = [
+    { v: '货型', s: { /* rowspan2, 单独处理 */ } },
+    { v: '线路' },
+    { v: '币种' },
+    { v: h.group1 || '地面费用', s: {} },  // colspan 7
+    null, null, null, null, null, null,     // 6个空占位（共7列）
+    { v: h.group2 || '航司空运费用', s: {} }, // colspan 5
+    null, null, null, null,                 // 4个空占位（共5列）
+    { v: h.group3 || '航司危险品费用', s: {} }, // colspan 5
+    null, null, null, null,                 // 4个空占位（共5列）
+    { v: '备注' },
+    { v: '操作' }
+  ];
+
+  // ── 第2行：子表头 ──
+  const row2 = [
+    null, null, null,  // 货型/线路/币种 rowspan2
+    h.h_d_min || '', h.h_d_kg || '', h.h_f_min || '', h.h_f_kg || '',
+    h.h_h || '', (h.h_i || '').replace(/\n/g, '\n'), h.h_j || '',
+    h.h_k || '', (h.h_l || '').replace(/\n/g, '\n'), (h.h_m || '').replace(/\n/g, '\n'),
+    h.h_n || '', h.h_o || '',
+    h.h_p || '', h.h_q || '', h.h_r || '', (h.h_s || '').replace(/\n/g, '\n'), (h.h_t || '').replace(/\n/g, '\n'),
+    null, // 备注 rowspan2
+    null  // 操作
+  ];
+
+  // ── 统一样式定义 ──
+  const thinBorder = { style: 'thin', color: { rgb: '000000' } };
+  const borderAll = { top: thinBorder, bottom: thinBorder, left: thinBorder, right: thinBorder };
+
+  // 分组标题样式（深蓝底白字加粗）
+  const groupStyle = {
+    font: { name: '微软雅黑', bold: true, sz: 11, color: { rgb: 'FFFFFF' } },
+    fill: { fgColor: { rgb: '1F4E79' } },
+    alignment: { horizontal: 'center', vertical: 'center', wrapText: true },
+    border: borderAll
+  };
+  // 子标题样式（浅蓝底加粗）
+  const subStyle = {
+    font: { name: '微软雅黑', bold: true, sz: 10, color: { rgb: '000000' } },
+    fill: { fgColor: { rgb: 'D6E4F0' } },
+    alignment: { horizontal: 'center', vertical: 'center', wrapText: true },
+    border: borderAll
+  };
+  // 数据单元格样式
+  const dataStyle = {
+    font: { name: '微软雅黑', sz: 10 },
+    alignment: { horizontal: 'center', vertical: 'center' },
+    border: borderAll
+  };
+
+  // ── 构建二维数组 ──
+  const fields = [
+    'type','route','currency',
+    'd_min','d_kg','f_min','f_kg','h','i','j',
+    'k','l','m','n','o',
+    'p','q','r','s','t',
+    'remark'
+  ];
+  const totalCols = 22; // 21数据列 + 操作列
+
+  // 构建单元格数据
+  const cells = [];
+
+  // 第1行：分组标题
+  const r1 = [];
+  for (let c = 0; c < totalCols; c++) r1.push(null);
+  r1[0] = { v: '货型', s: groupStyle };
+  r1[1] = { v: '线路', s: groupStyle };
+  r1[2] = { v: '币种', s: groupStyle };
+  r1[3] = { v: h.group1 || '地面费用', s: groupStyle };
+  r1[10] = { v: h.group2 || '航司空运费用', s: groupStyle };
+  r1[15] = { v: h.group3 || '航司危险品费用', s: groupStyle };
+  r1[20] = { v: '备注', s: groupStyle };
+  r1[21] = { v: '操作', s: groupStyle };
+  cells.push(r1);
+
+  // 第2行：子表头
+  const subHeaders = [
+    null, null, null,  // 货型/线路/币种 rowspan2
+    (h.h_d_min || '').replace(/\n/g, ' '),
+    (h.h_d_kg || '').replace(/\n/g, ' '),
+    (h.h_f_min || '').replace(/\n/g, ' '),
+    (h.h_f_kg || '').replace(/\n/g, ' '),
+    (h.h_h || '').replace(/\n/g, ' '),
+    (h.h_i || '').replace(/\n/g, ' '),
+    (h.h_j || '').replace(/\n/g, ' '),
+    (h.h_k || '').replace(/\n/g, ' '),
+    (h.h_l || '').replace(/\n/g, ' '),
+    (h.h_m || '').replace(/\n/g, ' '),
+    (h.h_n || '').replace(/\n/g, ' '),
+    (h.h_o || '').replace(/\n/g, ' '),
+    (h.h_p || '').replace(/\n/g, ' '),
+    (h.h_q || '').replace(/\n/g, ' '),
+    (h.h_r || '').replace(/\n/g, ' '),
+    (h.h_s || '').replace(/\n/g, ' '),
+    (h.h_t || '').replace(/\n/g, ' '),
+    null, null  // 备注/操作 rowspan2
+  ];
+  const r2 = subHeaders.map(v => ({ v: v || '', s: subStyle }));
+  cells.push(r2);
+
+  // 数据行
+  appData.rows.forEach(r => {
+    const dataRow = fields.map(f => {
+      const v = r[f];
+      const display = (v === null || v === undefined || v === '') ? '' : v;
+      return { v: display, t: typeof display === 'number' ? 'n' : 's', s: JSON.parse(JSON.stringify(dataStyle)) };
+    });
+    dataRow.push({ v: '', s: dataStyle }); // 操作列空白
+    cells.push(dataRow);
+  });
+
+  // ── 用aoa_to_sheet创建worksheet ──
+  const aoa = cells.map(row => row.map(cell => cell ? cell.v : ''));
+  const ws = XLSX.utils.aoa_to_sheet(aoa);
+
+  // ── 应用样式到每个单元格 ──
+  for (let R = 0; R < cells.length; R++) {
+    for (let C = 0; C < cells[R].length; C++) {
+      const addr = XLSX.utils.encode_cell({ r: R, c: C });
+      if (!ws[addr]) ws[addr] = { v: '' };
+      ws[addr].s = cells[R][C] ? cells[R][C].s : dataStyle;
+    }
+  }
+
+  // ── 合并单元格 ──
+  ws['!merges'] = [
+    // 第1行：货型/线路/币种/备注/操作 纵向合并2行
+    { s: { r: 0, c: 0 }, e: { r: 1, c: 0 } },  // 货型
+    { s: { r: 0, c: 1 }, e: { r: 1, c: 1 } },  // 线路
+    { s: { r: 0, c: 2 }, e: { r: 1, c: 2 } },  // 币种
+    { s: { r: 0, c: 20 }, e: { r: 1, c: 20 } }, // 备注
+    { s: { r: 0, c: 21 }, e: { r: 1, c: 21 } }, // 操作
+    // 第1行：地面费用 横向合并7列
+    { s: { r: 0, c: 3 }, e: { r: 0, c: 9 } },
+    // 第1行：航司空运费用 横向合并5列
+    { s: { r: 0, c: 10 }, e: { r: 0, c: 14 } },
+    // 第1行：航司危险品费用 横向合并5列
+    { s: { r: 0, c: 15 }, e: { r: 0, c: 19 } },
+  ];
+
+  // ── 列宽 ──
+  ws['!cols'] = [];
+  for (let i = 0; i < totalCols; i++) {
+    ws['!cols'].push({ wch: i < 3 ? 10 : (i < 21 ? 16 : 8) });
+  }
+  // ── 行高 ──
+  ws['!rows'] = cells.map((row, ri) => ({ hpt: ri < 2 ? 32 : 22 }));
+
+  const wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, ws, '报价查询表');
+  XLSX.writeFile(wb, `报价查询表_${new Date().toISOString().slice(0,10)}.xlsx`);
+  showToast('✅ Excel已导出（微软雅黑·深蓝表头·黑色边框）', 'success');
+}
+
+// ═══════════ 行操作 ═══════════
+function editRow(id) {
+  if (!isAdmin()) return;
+  const row = appData.rows.find(r => r.id === id);
+  if (!row) return;
+  // 填入模态框
+  document.getElementById('new-type').value = row.type;
+  document.getElementById('new-route').value = row.route;
+  document.getElementById('new-currency').value = row.currency || 'CNY';
+  const setVal = (id, v) => { const el = document.getElementById(id); if (el) el.value = (v === null || v === undefined) ? '' : v; };
+  setVal('new-d-min', row.d_min);
+  setVal('new-d-kg', row.d_kg);
+  setVal('new-f-min', row.f_min);
+  setVal('new-f-kg', row.f_kg);
+  setVal('new-h', row.h);
+  setVal('new-i', row.i);
+  setVal('new-j', row.j);
+  setVal('new-k', row.k);
+  setVal('new-l', row.l);
+  setVal('new-m', row.m);
+  setVal('new-n', row.n);
+  setVal('new-o', row.o);
+  setVal('new-p', row.p);
+  setVal('new-q', row.q);
+  setVal('new-r', row.r);
+  setVal('new-s', row.s);
+  setVal('new-t', row.t);
+  document.getElementById('new-remark').value = row.remark || '';
+  // 标记编辑模式
+  document.getElementById('add-row-modal').dataset.editId = id;
+  document.querySelector('#add-row-modal .modal-title').textContent = '✏️ 编辑报价行';
+  document.getElementById('add-row-modal').classList.add('show');
+}
+
+function confirmAddRow() {
+  const editId = parseInt(document.getElementById('add-row-modal').dataset.editId);
+  const type = document.getElementById('new-type').value;
+  const route = document.getElementById('new-route').value.trim();
+  if (!route) { showToast('请填写线路', 'error'); return; }
+  const n = el => { const s = el.value.trim(); return s === '' ? null : parseFloat(s); };
+  const isDG = type === 'DG';
+  const rowData = {
+    type, route,
+    currency: document.getElementById('new-currency').value,
+    d_min: n(document.getElementById('new-d-min')),
+    d_kg: n(document.getElementById('new-d-kg')),
+    f_min: n(document.getElementById('new-f-min')),
+    f_kg: n(document.getElementById('new-f-kg')),
+    h: n(document.getElementById('new-h')),
+    i: n(document.getElementById('new-i')),
+    j: n(document.getElementById('new-j')),
+    k: n(document.getElementById('new-k')),
+    l: n(document.getElementById('new-l')),
+    m: n(document.getElementById('new-m')),
+    n: n(document.getElementById('new-n')),
+    o: n(document.getElementById('new-o')),
+    p: isDG ? n(document.getElementById('new-p')) : null,
+    q: isDG ? n(document.getElementById('new-q')) : null,
+    r: isDG ? n(document.getElementById('new-r')) : null,
+    s: isDG ? n(document.getElementById('new-s')) : null,
+    t: isDG ? n(document.getElementById('new-t')) : null,
+    remark: document.getElementById('new-remark').value.trim(),
+  };
+  if (editId) {
+    const idx = appData.rows.findIndex(r => r.id === editId);
+    if (idx >= 0) { rowData.id = editId; appData.rows[idx] = rowData; }
+    delete document.getElementById('add-row-modal').dataset.editId;
+    document.querySelector('#add-row-modal .modal-title').textContent = '➕ 新增报价行';
+    showToast(`✅ 已更新：${type} ${route}`, 'success');
+  } else {
+    rowData.id = nextId++;
+    appData.rows.push(rowData);
+    updateRoutesFilter();
+    showToast(`✅ 已新增：${type} ${route}`, 'success');
+  }
+  saveData();
+  closeModal('add-row-modal');
+  applyFilters();
+  document.querySelectorAll('#add-row-modal input').forEach(i => i.value = '');
+}
+
+function addBlankRow(id) {
+  if (!isAdmin()) return;
+  const idx = appData.rows.findIndex(r => r.id === id);
+  if (idx < 0) return;
+  const refRow = appData.rows[idx];
+  const newRow = {
+    id: nextId++,
+    type: refRow.type,
+    route: '',
+    currency: 'RMB',
+    d_min: null, d_kg: null,
+    f_min: null, f_kg: null,
+    h: null, i: null, j: null,
+    k: null, l: null, m: null,
+    n: null, o: null,
+    p: refRow.type === 'DG' ? null : null,
+    q: null, r: null, s: null, t: null,
+    remark: '',
+  };
+  appData.rows.splice(idx + 1, 0, newRow);
+  saveData();
+  applyFilters();
+  showToast('✅ 已在该行下方新增空白行', 'success');
+}
+function closeModal(id) { document.getElementById(id).classList.remove('show'); }
+function showToast(msg, type) {
+  const c = document.getElementById('toast-container');
+  const t = document.createElement('div');
+  t.className = 'toast ' + (type || '');
+  t.textContent = msg;
+  c.appendChild(t);
+  setTimeout(() => { t.style.opacity = '0'; setTimeout(() => t.remove(), 300); }, 2600);
+}
+
+document.querySelectorAll('.modal-overlay').forEach(o => {
+  o.addEventListener('click', e => { if (e.target === o) o.classList.remove('show'); });
+});
+
+// 启动应用（Supabase Auth 版本）
+init().catch(err => {
+  console.error('Init error:', err);
+  document.getElementById('login-error').textContent = '系统初始化失败，请刷新页面重试';
+  document.getElementById('login-error').style.display = 'block';
+});
+</script>
+</body>
+</html>
