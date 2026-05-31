@@ -1049,7 +1049,40 @@ const HEADERS_VERSION = 3; // 表头版本号：每次修改DEFAULT_HEADERS后�
 // ═══════════ Supabase 初始化 ═══════════
 const SUPABASE_URL = 'https://aepvhmxuatuhoxqgqxzx.supabase.co';
 const SUPABASE_ANON_KEY = 'sb_publishable_guRDEbvw16fvZoOAwlhrnA_cTy9RGNO';
-const supabase = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+let supabase = null;
+let supabaseAvailable = false;
+try {
+  if (typeof window.supabase !== 'undefined' && window.supabase.createClient) {
+    supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+    supabaseAvailable = true;
+  } else {
+    console.warn('Supabase 库未加载，启用本地模式');
+  }
+} catch (e) {
+  console.error('Supabase 初始化失败:', e);
+}
+
+// ═══════════ 本地用户（Supabase 不可用时降级） ═══════════
+const LOCAL_USERS_KEY = 'af_local_users_v1';
+function getLocalUsers() {
+  try { return JSON.parse(localStorage.getItem(LOCAL_USERS_KEY)) || []; }
+  catch { return []; }
+}
+function saveLocalUsers(list) { localStorage.setItem(LOCAL_USERS_KEY, JSON.stringify(list)); }
+function ensureLocalDefaults() {
+  let list = getLocalUsers();
+  const defaults = [
+    { id: 'local-superadmin', email: 'superadmin@local.system', password: 'super888', username: '超级管理员', role: 'superadmin' },
+    { id: 'local-admin', email: 'admin@local.system', password: 'admin888', username: '管理员', role: 'admin' }
+  ];
+  let changed = false;
+  for (const d of defaults) {
+    if (!list.find(u => u.id === d.id)) { list.push(d); changed = true; }
+  }
+  if (changed) saveLocalUsers(list);
+  return list;
+}
+ensureLocalDefaults();
 
 // appData 作为内存缓存（报价查询表数据仍用 localStorage 兼容）
 const KEY_DATA = 'airfreight_data_v3';
@@ -1819,19 +1852,25 @@ async function init() {
   nextId = Math.max(100, ...appData.rows.map(r => r.id)) + 1;
 
   // 检查 Supabase Auth 状态
-  const { data: { session }, error: sessionError } = await supabase.auth.getSession();
-  if (sessionError) console.error('getSession error:', sessionError);
+  if (supabaseAvailable && supabase) {
+    try {
+      const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+      if (sessionError) console.error('getSession error:', sessionError);
 
-  if (session && session.user) {
-    // 已登录，获取用户 profile
-    currentUser = await fetchUserProfile(session.user);
-    document.getElementById('login-screen').style.display = 'none';
-    document.getElementById('app').style.display = 'flex';
-    await finishInit();
-    return;
+      if (session && session.user) {
+        // 已登录，获取用户 profile
+        currentUser = await fetchUserProfile(session.user);
+        document.getElementById('login-screen').style.display = 'none';
+        document.getElementById('app').style.display = 'flex';
+        await finishInit();
+        return;
+      }
+    } catch (e) {
+      console.error('Supabase session check failed:', e);
+    }
   }
 
-  // 未登录，显示登录页
+  // 未登录或 Supabase 不可用，显示登录页
   document.getElementById('login-screen').style.display = 'flex';
   document.getElementById('app').style.display = 'none';
 }
@@ -1887,16 +1926,31 @@ async function doLogin() {
   }
 
   try {
-    const { data, error } = await supabase.auth.signInWithPassword({ email, password });
+    // 优先使用 Supabase 登录
+    if (supabaseAvailable && supabase) {
+      const { data, error } = await supabase.auth.signInWithPassword({ email, password });
 
-    if (error) {
-      errorEl.textContent = '登录失败：' + error.message;
-      errorEl.style.display = 'block';
-      document.getElementById('login-pass').value = '';
-      return;
+      if (error) {
+        errorEl.textContent = '登录失败：' + error.message;
+        errorEl.style.display = 'block';
+        document.getElementById('login-pass').value = '';
+        return;
+      }
+
+      currentUser = await fetchUserProfile(data.user);
+    } else {
+      // Supabase 不可用，使用本地账户验证
+      const localUsers = getLocalUsers();
+      const localUser = localUsers.find(u => u.email === email && u.password === password);
+      if (!localUser) {
+        errorEl.textContent = '邮箱或密码错误';
+        errorEl.style.display = 'block';
+        document.getElementById('login-pass').value = '';
+        return;
+      }
+      currentUser = { ...localUser, authUser: null };
     }
 
-    currentUser = await fetchUserProfile(data.user);
     document.getElementById('login-error').style.display = 'none';
     document.getElementById('login-screen').style.display = 'none';
     document.getElementById('app').style.display = 'flex';
@@ -1928,30 +1982,48 @@ async function doRegister() {
   }
 
   try {
-    // 1. 在 Supabase Auth 中注册用户
-    const { data, error } = await supabase.auth.signUp({
-      email,
-      password,
-      options: {
-        data: { username }
-      }
-    });
-
-    if (error) {
-      errorEl.textContent = '注册失败：' + error.message;
-      errorEl.style.display = 'block';
-      return;
-    }
-
-    // 2. 创建 profile 记录
-    if (data.user) {
-      const { error: profileErr } = await supabase.from('profiles').insert({
-        id: data.user.id,
-        username,
-        role: 'admin',
-        created_at: new Date().toISOString()
+    if (supabaseAvailable && supabase) {
+      // 1. 在 Supabase Auth 中注册用户
+      const { data, error } = await supabase.auth.signUp({
+        email,
+        password,
+        options: {
+          data: { username }
+        }
       });
-      if (profileErr) console.error('create profile error:', profileErr);
+
+      if (error) {
+        errorEl.textContent = '注册失败：' + error.message;
+        errorEl.style.display = 'block';
+        return;
+      }
+
+      // 2. 创建 profile 记录
+      if (data.user) {
+        const { error: profileErr } = await supabase.from('profiles').insert({
+          id: data.user.id,
+          username,
+          role: 'admin',
+          created_at: new Date().toISOString()
+        });
+        if (profileErr) console.error('create profile error:', profileErr);
+      }
+    } else {
+      // Supabase 不可用，使用本地注册
+      const localUsers = getLocalUsers();
+      if (localUsers.find(u => u.email === email)) {
+        errorEl.textContent = '该邮箱已被注册';
+        errorEl.style.display = 'block';
+        return;
+      }
+      localUsers.push({
+        id: 'local-' + Date.now(),
+        email,
+        password,
+        username,
+        role: 'admin'
+      });
+      saveLocalUsers(localUsers);
     }
 
     errorEl.style.display = 'none';
@@ -1980,7 +2052,9 @@ function switchToLogin() {
 
 async function doLogout() {
   try {
-    await supabase.auth.signOut();
+    if (supabaseAvailable && supabase) {
+      await supabase.auth.signOut();
+    }
   } catch (err) {
     console.error('logout error:', err);
   }
