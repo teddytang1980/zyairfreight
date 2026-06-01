@@ -1965,60 +1965,30 @@ async function doLogin() {
     return;
   }
 
-  try {
-    // 优先使用 Supabase 登录（通过 username 查找）
-    let loginSuccess = false;
-    if (supabaseAvailable && supabase) {
-      // 查找 profiles 表中的对应 username
-      const { data: profiles, error: findErr } = await supabase
-        .from('profiles')
-        .select('id, username, email, role')
-        .eq('username', username)
-        .limit(1);
-
-      if (!findErr && profiles && profiles.length > 0) {
-        const profile = profiles[0];
-        // 用 profile 关联的 email 登录 Supabase Auth
-        const loginEmail = profile.email || (username + '@local.system');
-        const { data, error } = await supabase.auth.signInWithPassword({ email: loginEmail, password });
-
-        if (!error && data.user) {
-          currentUser = { ...profile, email: profile.email, authUser: data.user };
-          loginSuccess = true;
-        }
-      }
-    }
-
-    // Supabase 登录失败或不可用，使用本地账户验证
-    if (!loginSuccess) {
-      const localUsers = getLocalUsers();
-      const localUser = localUsers.find(u => u.username === username && u.password === password);
-      if (!localUser) {
-        errorEl.textContent = '账号或密码错误';
-        errorEl.style.display = 'block';
-        document.getElementById('login-pass').value = '';
-        return;
-      }
-      currentUser = { ...localUser, authUser: null };
-    }
-
-    // 7天免登录
-    if (remember) {
-      const token = btoa(JSON.stringify({ username, password, ts: Date.now() }));
-      localStorage.setItem('af_remember_token', token);
-      localStorage.setItem('af_remember_expire', String(Date.now() + 7 * 24 * 60 * 60 * 1000));
-    }
-
-    errorEl.style.display = 'none';
-    document.getElementById('login-screen').style.display = 'none';
-    document.getElementById('app').style.display = 'flex';
-    await finishInit();
-    showToast('✅ 欢迎回来，' + (currentUser.username || currentUser.email), 'success');
-  } catch (err) {
-    console.error('doLogin error:', err);
-    errorEl.textContent = '登录异常：' + err.message;
+  // 使用本地账户验证（离线可用，简单可靠）
+  const localUsers = getLocalUsers();
+  const localUser = localUsers.find(u => u.username === username && u.password === password);
+  if (!localUser) {
+    errorEl.textContent = '账号或密码错误';
     errorEl.style.display = 'block';
+    document.getElementById('login-pass').value = '';
+    return;
   }
+
+  currentUser = { ...localUser, authUser: null };
+
+  // 7天免登录
+  if (remember) {
+    const token = btoa(JSON.stringify({ username, password, ts: Date.now() }));
+    localStorage.setItem('af_remember_token', token);
+    localStorage.setItem('af_remember_expire', String(Date.now() + 7 * 24 * 60 * 60 * 1000));
+  }
+
+  errorEl.style.display = 'none';
+  document.getElementById('login-screen').style.display = 'none';
+  document.getElementById('app').style.display = 'flex';
+  await finishInit();
+  showToast('✅ 欢迎回来，' + currentUser.username, 'success');
 }
 
 
