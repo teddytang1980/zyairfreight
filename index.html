@@ -1071,8 +1071,8 @@ textarea.editable-input.header-input{
     </div>
     <!-- 顶部统计卡片 -->
     <div style="padding:16px 20px 0;display:grid;grid-template-columns:repeat(3,1fr);gap:12px;" id="kanban-stats"></div>
-    <!-- 图表区域 -->
-    <div style="padding:16px 20px 20px;display:grid;grid-template-columns:340px 1fr;gap:16px;">
+    <!-- 第二行：状态分布 + 月度应收款 -->
+    <div style="padding:16px 20px 0;display:grid;grid-template-columns:300px 1fr;gap:16px;">
       <!-- 左侧：状态分布 -->
       <div class="kb-card">
         <div class="kb-card-title"><span class="kb-dot" style="background:#6366f1;"></span>项目状态分布</div>
@@ -1080,15 +1080,24 @@ textarea.editable-input.header-input{
           <canvas id="chart-status"></canvas>
         </div>
       </div>
-      <!-- 右侧：月度项目数量（累计柱状图） -->
+      <!-- 右侧：月度应收款（累计柱状图） -->
       <div class="kb-card">
-        <div class="kb-card-title"><span class="kb-dot" style="background:#3b82f6;"></span>月度项目数量（按状态累计）</div>
+        <div class="kb-card-title"><span class="kb-dot" style="background:#8b5cf6;"></span>月度应收款（按状态累计）</div>
         <div style="height:220px;position:relative;">
-          <canvas id="chart-amount"></canvas>
+          <canvas id="chart-receivable"></canvas>
         </div>
       </div>
     </div>
-    <!-- 底部：月度项目分布 -->
+    <!-- 第三行：月度项目统计（普通柱状图） -->
+    <div style="padding:16px 20px 0;">
+      <div class="kb-card">
+        <div class="kb-card-title"><span class="kb-dot" style="background:#3b82f6;"></span>月度项目统计</div>
+        <div style="height:220px;position:relative;">
+          <canvas id="chart-project"></canvas>
+        </div>
+      </div>
+    </div>
+    <!-- 第四行：月度项目时间分布 -->
     <div style="padding:0 20px 20px;">
       <div class="kb-card">
         <div class="kb-card-title"><span class="kb-dot" style="background:#10b981;"></span>月度项目时间分布</div>
@@ -3081,7 +3090,7 @@ init().catch(err => {
 });
 
 // ═══ 看板图表渲染 ═══
-let chartStatus = null, chartAmount = null, chartTimeline = null;
+let chartStatus = null, chartReceivable = null, chartProject = null, chartTimeline = null;
 async function renderKanban() {
   if (typeof Chart === 'undefined') { console.warn('Chart.js 未加载'); return; }
   if (!projects.length) { console.log('暂无项目数据'); return; }
@@ -3112,13 +3121,32 @@ async function renderKanban() {
   Chart.defaults.font.size = 11;
   Chart.defaults.color = '#94a3b8';
 
-  // ── 公共：生成12个月标签 ──
+  // ── 公共：12个月标签 ──
   const now = new Date();
   const year = now.getFullYear();
   const allMonths = [];
   for (let i = 1; i <= 12; i++) {
     allMonths.push(year + '-' + String(i).padStart(2,'0'));
   }
+  const monthLabels = allMonths.map(m => parseInt(m.slice(5)) + '月');
+
+  // ── 公共：按月按状态统计项目数和金额 ──
+  const monthByStatus = {};
+  const amountByStatus = {};
+  allMonths.forEach(m => {
+    monthByStatus[m] = { '待出发':0, '延误':0, '完成':0 };
+    amountByStatus[m] = { '待出发':0, '延误':0, '完成':0 };
+  });
+  projects.forEach(p => {
+    const t = p.departureTime || '';
+    const m = t ? t.slice(0,7) : '';
+    const s = p.status || '待出发';
+    const v = parseFloat(p.results?.mainTotal) || 0;
+    if (monthByStatus[m] && monthByStatus[m].hasOwnProperty(s)) {
+      monthByStatus[m][s]++;
+      amountByStatus[m][s] += v;
+    }
+  });
 
   // ── 1. 状态分布（环形图 + 中心文字 + 数据标签）───
   const statusLabels = Object.keys(statusCount);
@@ -3188,33 +3216,22 @@ async function renderKanban() {
     });
   }
 
-  // ── 2. 月度项目数量（按状态累计柱状图）───
-  const monthByStatus = {};
-  allMonths.forEach(m => { monthByStatus[m] = { '待出发':0, '延误':0, '完成':0 }; });
-  projects.forEach(p => {
-    const t = p.departureTime || '';
-    const m = t ? t.slice(0,7) : '';
-    const s = p.status || '待出发';
-    if (monthByStatus[m] && monthByStatus[m].hasOwnProperty(s)) {
-      monthByStatus[m][s]++;
-    }
-  });
+  // ── 2. 月度应收款（按状态累计柱状图）───
+  const recvPending = allMonths.map(m => Math.round(amountByStatus[m]['待出发'] * 100) / 100);
+  const recvDelayed = allMonths.map(m => Math.round(amountByStatus[m]['延误'] * 100) / 100);
+  const recvDone    = allMonths.map(m => Math.round(amountByStatus[m]['完成'] * 100) / 100);
 
-  const pendingData = allMonths.map(m => monthByStatus[m]['待出发']);
-  const delayedData = allMonths.map(m => monthByStatus[m]['延误']);
-  const doneData    = allMonths.map(m => monthByStatus[m]['完成']);
-
-  if (chartAmount) chartAmount.destroy();
-  const ctx2 = document.getElementById('chart-amount');
+  if (chartReceivable) chartReceivable.destroy();
+  const ctx2 = document.getElementById('chart-receivable');
   if (ctx2) {
-    chartAmount = new Chart(ctx2, {
+    chartReceivable = new Chart(ctx2, {
       type:'bar',
       data:{
-        labels:allMonths.map(m => parseInt(m.slice(5)) + '月'),
+        labels:monthLabels,
         datasets:[
           {
             label:'待出发',
-            data:pendingData,
+            data:recvPending,
             backgroundColor:'rgba(96,165,250,0.85)',
             hoverBackgroundColor:'rgba(96,165,250,1)',
             borderRadius:2,
@@ -3222,7 +3239,7 @@ async function renderKanban() {
           },
           {
             label:'延误',
-            data:delayedData,
+            data:recvDelayed,
             backgroundColor:'rgba(248,113,113,0.85)',
             hoverBackgroundColor:'rgba(248,113,113,1)',
             borderRadius:2,
@@ -3230,7 +3247,7 @@ async function renderKanban() {
           },
           {
             label:'完成',
-            data:doneData,
+            data:recvDone,
             backgroundColor:'rgba(52,211,153,0.85)',
             hoverBackgroundColor:'rgba(52,211,153,1)',
             borderRadius:2,
@@ -3251,21 +3268,102 @@ async function renderKanban() {
             bodyFont:{size:11},padding:10,cornerRadius:8,
             callbacks:{
               title:function(items){ return allMonths[items[0].dataIndex]; },
-              label:function(ctx){ return ` ${ctx.dataset.label}: ${ctx.parsed.y} 个`; }
+              label:function(ctx){ return ` ${ctx.dataset.label}: ¥${ctx.parsed.y.toLocaleString()}`; }
             }
           },
           datalabels:{
             color:'#fff',
-            font:{size:10,weight:'600'},
+            font:{size:9,weight:'600'},
             anchor:'center',
             align:'center',
-            formatter:function(value){ return value > 0 ? value : ''; }
+            formatter:function(value){ return value > 0 ? (value >= 10000 ? (value/10000).toFixed(1)+'万' : value.toFixed(0)) : ''; }
           }
         },
         scales:{
           x:{ stacked:true, grid:{display:false}, ticks:{font:{size:10}} },
           y:{
             stacked:true,
+            beginAtZero:true,
+            grid:{color:'rgba(148,163,184,0.08)'},
+            ticks:{
+              font:{size:10},
+              callback:function(v){ return v >= 10000 ? (v/10000).toFixed(0)+'万' : v; }
+            }
+          }
+        }
+      }
+    });
+  }
+
+  // ── 3. 月度项目统计（普通分组柱状图）───
+  const projPending = allMonths.map(m => monthByStatus[m]['待出发']);
+  const projDelayed = allMonths.map(m => monthByStatus[m]['延误']);
+  const projDone    = allMonths.map(m => monthByStatus[m]['完成']);
+
+  if (chartProject) chartProject.destroy();
+  const ctx3 = document.getElementById('chart-project');
+  if (ctx3) {
+    chartProject = new Chart(ctx3, {
+      type:'bar',
+      data:{
+        labels:monthLabels,
+        datasets:[
+          {
+            label:'待出发',
+            data:projPending,
+            backgroundColor:'rgba(96,165,250,0.85)',
+            hoverBackgroundColor:'rgba(96,165,250,1)',
+            borderRadius:3,
+            borderSkipped:false,
+            maxBarThickness:28
+          },
+          {
+            label:'延误',
+            data:projDelayed,
+            backgroundColor:'rgba(248,113,113,0.85)',
+            hoverBackgroundColor:'rgba(248,113,113,1)',
+            borderRadius:3,
+            borderSkipped:false,
+            maxBarThickness:28
+          },
+          {
+            label:'完成',
+            data:projDone,
+            backgroundColor:'rgba(52,211,153,0.85)',
+            hoverBackgroundColor:'rgba(52,211,153,1)',
+            borderRadius:3,
+            borderSkipped:false,
+            maxBarThickness:28
+          }
+        ]
+      },
+      options:{
+        responsive:true,
+        maintainAspectRatio:false,
+        plugins:{
+          legend:{
+            position:'top',
+            labels:{ usePointStyle:true, pointStyle:'rectRounded', padding:12, font:{size:11,weight:'500'} }
+          },
+          tooltip:{
+            backgroundColor:'rgba(30,41,59,0.92)',titleFont:{size:12,weight:'600'},
+            bodyFont:{size:11},padding:10,cornerRadius:8,
+            callbacks:{
+              title:function(items){ return allMonths[items[0].dataIndex]; },
+              label:function(ctx){ return ` ${ctx.dataset.label}: ${ctx.parsed.y} 个`; }
+            }
+          },
+          datalabels:{
+            color:'#475569',
+            font:{size:10,weight:'600'},
+            anchor:'end',
+            align:'top',
+            formatter:function(value){ return value > 0 ? value : ''; }
+          }
+        },
+        scales:{
+          x:{ grid:{display:false}, ticks:{font:{size:10}} },
+          y:{
             beginAtZero:true,
             grid:{color:'rgba(148,163,184,0.08)'},
             ticks:{ stepSize:1, font:{size:10} }
@@ -3275,8 +3373,7 @@ async function renderKanban() {
     });
   }
 
-  // ── 3. 月度项目时间分布（散点/点状图）───
-  // X轴=月份(1-12)，Y轴=日期(1-31)，每个点代表一个项目
+  // ── 4. 月度项目时间分布（散点/点状图）───
   const scatterData = [];
   projects.forEach(p => {
     const t = p.departureTime || '';
@@ -3286,20 +3383,18 @@ async function renderKanban() {
     const mIdx = parseInt(parts[1]);   // 1-12
     const day  = parseInt(parts[2]);   // 1-31
     const s = p.status || '待出发';
-    const color = s === '延误' ? '#f87171' : s === '完成' ? '#34d399' : '#60a5fa';
-    scatterData.push({ x: mIdx, y: day, status: s, color: color, pid: p.pid || '' });
+    scatterData.push({ x: mIdx, y: day, status: s, pid: p.pid || '' });
   });
 
   if (chartTimeline) chartTimeline.destroy();
-  const ctx3 = document.getElementById('chart-timeline');
-  if (ctx3) {
-    // 按状态分组
+  const ctx4 = document.getElementById('chart-timeline');
+  if (ctx4) {
     const groups = { '待出发': [], '延误': [], '完成': [] };
     scatterData.forEach(d => {
       if (groups[d.status]) groups[d.status].push(d);
     });
 
-    chartTimeline = new Chart(ctx3, {
+    chartTimeline = new Chart(ctx4, {
       type:'scatter',
       data:{
         datasets:[
@@ -3358,14 +3453,19 @@ async function renderKanban() {
             }
           },
           datalabels:{
-            color:'#475569',
-            font:{size:9,weight:'500'},
+            color:'#64748b',
+            font:{size:8,weight:'500'},
             anchor:'end',
             align:'top',
-            offset:4,
+            offset:3,
             formatter:function(value){ return value.y + '日'; },
             display:function(ctx){
-              // 仅当同月同日有多个项目时不重复显示，始终显示
+              const idx = ctx.dataIndex;
+              const data = ctx.dataset.data;
+              // 只显示同月同日中第一个点的标签，避免重叠
+              for (let i = 0; i < idx; i++) {
+                if (data[i].x === value.x && data[i].y === value.y) return false;
+              }
               return true;
             }
           }
