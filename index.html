@@ -642,6 +642,40 @@ textarea.editable-input.header-input{
 <style>
   #login-screen { display: none !important; }
   #app { display: flex !important; }
+
+/* ═══ 看板卡片样式 ═══ */
+.kb-card{
+  background:#fff;border-radius:12px;padding:16px 18px;
+  box-shadow:0 1px 3px rgba(0,0,0,0.06),0 1px 2px rgba(0,0,0,0.04);
+  border:1px solid #f1f5f9;transition:box-shadow .2s;
+}
+.kb-card:hover{box-shadow:0 4px 12px rgba(0,0,0,0.08);}
+.kb-card-title{
+  font-size:13px;font-weight:600;color:#475569;margin-bottom:12px;
+  display:flex;align-items:center;gap:8px;
+}
+.kb-dot{width:8px;height:8px;border-radius:50%;display:inline-block;}
+.kb-stat-card{
+  background:#fff;border-radius:10px;padding:14px 16px;
+  border:1px solid #f1f5f9;position:relative;overflow:hidden;
+  box-shadow:0 1px 3px rgba(0,0,0,0.04);
+}
+.kb-stat-card::after{
+  content:'';position:absolute;top:0;right:0;width:60px;height:60px;
+  border-radius:0 0 0 60px;opacity:0.06;
+}
+.kb-stat-card.kb-s-pending{border-left:3px solid #60a5fa;}
+.kb-stat-card.kb-s-pending::after{background:#60a5fa;}
+.kb-stat-card.kb-s-delayed{border-left:3px solid #f87171;}
+.kb-stat-card.kb-s-delayed::after{background:#f87171;}
+.kb-stat-card.kb-s-done{border-left:3px solid #34d399;}
+.kb-stat-card.kb-s-done::after{background:#34d399;}
+.kb-stat-num{font-size:28px;font-weight:800;line-height:1;margin-bottom:4px;}
+.kb-stat-card.kb-s-pending .kb-stat-num{color:#3b82f6;}
+.kb-stat-card.kb-s-delayed .kb-stat-num{color:#ef4444;}
+.kb-stat-card.kb-s-done .kb-stat-num{color:#10b981;}
+.kb-stat-label{font-size:12px;color:#94a3b8;font-weight:500;}
+
 </style>
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js"></script>
 </head>
@@ -1034,21 +1068,32 @@ textarea.editable-input.header-input{
     <div class="page-header">
       <div class="page-title">📊 数据看板</div>
     </div>
-    <div style="padding:20px;display:grid;grid-template-columns:1fr 1fr;gap:20px;">
-      <!-- 状态分布饼图 -->
-      <div style="background:#fff;border-radius:12px;padding:20px;box-shadow:0 1px 3px rgba(0,0,0,0.08);">
-        <div style="font-size:15px;font-weight:700;color:#1e293b;margin-bottom:16px;">项目状态分布</div>
-        <canvas id="chart-status"></canvas>
+    <!-- 顶部统计卡片 -->
+    <div style="padding:16px 20px 0;display:grid;grid-template-columns:repeat(3,1fr);gap:12px;" id="kanban-stats"></div>
+    <!-- 图表区域 -->
+    <div style="padding:16px 20px 20px;display:grid;grid-template-columns:340px 1fr;gap:16px;">
+      <!-- 左侧：状态分布 -->
+      <div class="kb-card">
+        <div class="kb-card-title"><span class="kb-dot" style="background:#6366f1;"></span>项目状态分布</div>
+        <div style="height:220px;display:flex;align-items:center;justify-content:center;">
+          <canvas id="chart-status"></canvas>
+        </div>
       </div>
-      <!-- 应收金额分布柱状图 -->
-      <div style="background:#fff;border-radius:12px;padding:20px;box-shadow:0 1px 3px rgba(0,0,0,0.08);">
-        <div style="font-size:15px;font-weight:700;color:#1e293b;margin-bottom:16px;">月度应收金额（主单总价格）</div>
-        <canvas id="chart-amount"></canvas>
+      <!-- 右侧：月度应收金额 -->
+      <div class="kb-card">
+        <div class="kb-card-title"><span class="kb-dot" style="background:#3b82f6;"></span>月度应收金额（主单总价格）</div>
+        <div style="height:220px;position:relative;">
+          <canvas id="chart-amount"></canvas>
+        </div>
       </div>
-      <!-- 时间分布图 -->
-      <div style="background:#fff;border-radius:12px;padding:20px;box-shadow:0 1px 3px rgba(0,0,0,0.08);grid-column:1/-1;">
-        <div style="font-size:15px;font-weight:700;color:#1e293b;margin-bottom:16px;">月度项目分布</div>
-        <canvas id="chart-timeline"></canvas>
+    </div>
+    <!-- 底部：月度项目分布 -->
+    <div style="padding:0 20px 20px;">
+      <div class="kb-card">
+        <div class="kb-card-title"><span class="kb-dot" style="background:#10b981;"></span>月度项目时间分布</div>
+        <div style="height:200px;position:relative;">
+          <canvas id="chart-timeline"></canvas>
+        </div>
       </div>
     </div>
   </div>
@@ -3038,32 +3083,95 @@ init().catch(err => {
 let chartStatus = null, chartAmount = null, chartTimeline = null;
 async function renderKanban() {
   if (typeof Chart === 'undefined') { console.warn('Chart.js 未加载'); return; }
-  // 使用全局 projects 变量（已通过 loadProjects() 加载）
-  // projects 是全局变量，无需重新读取
-  
   if (!projects.length) { console.log('暂无项目数据'); return; }
 
-  // ── 1. 状态分布（饼图）───
+  // ── 0. 顶部统计卡片 ──
   const statusCount = { '待出发': 0, '延误': 0, '完成': 0 };
   projects.forEach(p => {
-    const s = (p.status || '待出发');
+    const s = p.status || '待出发';
     if (statusCount.hasOwnProperty(s)) statusCount[s]++;
   });
+  const statsEl = document.getElementById('kanban-stats');
+  if (statsEl) {
+    const items = [
+      { cls:'kb-s-pending', num:statusCount['待出发'], label:'待出发项目', icon:'🚀' },
+      { cls:'kb-s-delayed', num:statusCount['延误'],   label:'延误项目',   icon:'⚠️' },
+      { cls:'kb-s-done',    num:statusCount['完成'],    label:'已完成项目', icon:'✅' }
+    ];
+    statsEl.innerHTML = items.map(it =>
+      `<div class="kb-stat-card ${it.cls}"><div class="kb-stat-num">${it.icon} ${it.num}</div><div class="kb-stat-label">${it.label}</div></div>`
+    ).join('');
+  }
+
+  // ── Chart.js 全局默认 ──
+  Chart.defaults.font.family = '-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif';
+  Chart.defaults.font.size = 11;
+  Chart.defaults.color = '#94a3b8';
+
+  // ── 1. 状态分布（环形图 + 中心文字）───
   const statusLabels = Object.keys(statusCount);
   const statusData   = Object.values(statusCount);
   const statusColors = ['#60a5fa', '#f87171', '#34d399'];
+  const statusHover  = ['#93bbfd', '#fca5a5', '#6ee7b7'];
+  const total = statusData.reduce((a,b) => a+b, 0);
 
   if (chartStatus) chartStatus.destroy();
   const ctx1 = document.getElementById('chart-status');
   if (ctx1) {
+    const centerTextPlugin = {
+      id:'centerText',
+      afterDraw(chart) {
+        const {ctx:c, chartArea:{left,right,top,bottom}} = chart;
+        const cx = (left+right)/2, cy = (top+bottom)/2;
+        c.save();
+        c.font = 'bold 26px -apple-system,sans-serif';
+        c.fillStyle = '#1e293b';
+        c.textAlign = 'center';
+        c.textBaseline = 'middle';
+        c.fillText(total, cx, cy-6);
+        c.font = '11px -apple-system,sans-serif';
+        c.fillStyle = '#94a3b8';
+        c.fillText('项目总数', cx, cy+14);
+        c.restore();
+      }
+    };
     chartStatus = new Chart(ctx1, {
       type:'doughnut',
-      data:{ labels:statusLabels, datasets:[{ data:statusData, backgroundColor:statusColors, borderWidth:2 }] },
-      options:{ responsive:true, plugins:{ legend:{ position:'bottom' } } }
+      data:{
+        labels:statusLabels,
+        datasets:[{
+          data:statusData,
+          backgroundColor:statusColors,
+          hoverBackgroundColor:statusHover,
+          borderWidth:0,
+          hoverOffset:6,
+          borderRadius:4,
+          spacing:3
+        }]
+      },
+      options:{
+        responsive:true,
+        maintainAspectRatio:false,
+        cutout:'68%',
+        plugins:{
+          legend:{
+            position:'bottom',
+            labels:{ usePointStyle:true, pointStyle:'circle', padding:14, font:{size:11,weight:'500'} }
+          },
+          tooltip:{
+            backgroundColor:'rgba(30,41,59,0.92)',titleFont:{size:12,weight:'600'},
+            bodyFont:{size:11},padding:10,cornerRadius:8,displayColors:true,
+            callbacks:{
+              label:function(ctx){ const pct=total?((ctx.parsed/total)*100).toFixed(1):0; return ` ${ctx.label}: ${ctx.parsed} 个 (${pct}%)`; }
+            }
+          }
+        }
+      },
+      plugins:[centerTextPlugin]
     });
   }
 
-  // ── 2. 月度应收金额（柱状图）───
+  // ── 2. 月度应收金额（渐变柱状图）───
   const monthMap = {};
   projects.forEach(p => {
     const t = p.departureTime || '';
@@ -3072,24 +3180,60 @@ async function renderKanban() {
     monthMap[m] = (monthMap[m] || 0) + v;
   });
   const sortedMonths = Object.keys(monthMap).sort();
-  const monthAmounts = sortedMonths.map(m => monthMap[m]);
+  const monthAmounts = sortedMonths.map(m => Math.round(monthMap[m] * 100) / 100);
 
   if (chartAmount) chartAmount.destroy();
   const ctx2 = document.getElementById('chart-amount');
   if (ctx2) {
+    const ctx2d = ctx2.getContext('2d');
+    const gradient = ctx2d.createLinearGradient(0, 0, 0, 220);
+    gradient.addColorStop(0, 'rgba(99,102,241,0.85)');
+    gradient.addColorStop(1, 'rgba(99,102,241,0.25)');
+
     chartAmount = new Chart(ctx2, {
       type:'bar',
       data:{
-        labels:sortedMonths,
-        datasets:[{ label:'应收金额（元）', data:monthAmounts,
-          backgroundColor:'rgba(59,130,246,0.6)', borderColor:'rgba(59,130,246,1)', borderWidth:1 }]
+        labels:sortedMonths.map(m => m.slice(5) + '月'),
+        datasets:[{
+          label:'应收金额',
+          data:monthAmounts,
+          backgroundColor:gradient,
+          hoverBackgroundColor:'rgba(99,102,241,1)',
+          borderRadius:6,
+          borderSkipped:false,
+          maxBarThickness:36
+        }]
       },
-      options:{ responsive:true, plugins:{ legend:{ display:false } },
-        scales:{ y:{ beginAtZero:true } } }
+      options:{
+        responsive:true,
+        maintainAspectRatio:false,
+        plugins:{
+          legend:{ display:false },
+          tooltip:{
+            backgroundColor:'rgba(30,41,59,0.92)',titleFont:{size:12,weight:'600'},
+            bodyFont:{size:11},padding:10,cornerRadius:8,
+            callbacks:{
+              title:function(items){ return sortedMonths[items[0].dataIndex]; },
+              label:function(ctx){ return ` ¥${ctx.parsed.y.toLocaleString()}`; }
+            }
+          }
+        },
+        scales:{
+          x:{ grid:{display:false}, ticks:{font:{size:11}} },
+          y:{
+            beginAtZero:true,
+            grid:{color:'rgba(148,163,184,0.08)'},
+            ticks:{
+              font:{size:10},
+              callback:function(v){ return v >= 10000 ? (v/10000).toFixed(0)+'万' : v; }
+            }
+          }
+        }
+      }
     });
   }
 
-  // ── 3. 月度项目分布（折线图）───
+  // ── 3. 月度项目分布（面积折线图）───
   const monthCount = {};
   projects.forEach(p => {
     const t = p.departureTime || '';
@@ -3102,16 +3246,56 @@ async function renderKanban() {
   if (chartTimeline) chartTimeline.destroy();
   const ctx3 = document.getElementById('chart-timeline');
   if (ctx3) {
+    const ctx3d = ctx3.getContext('2d');
+    const areaGrad = ctx3d.createLinearGradient(0, 0, 0, 200);
+    areaGrad.addColorStop(0, 'rgba(16,185,129,0.25)');
+    areaGrad.addColorStop(1, 'rgba(16,185,129,0.02)');
+
     chartTimeline = new Chart(ctx3, {
       type:'line',
       data:{
-        labels:sortedM,
-        datasets:[{ label:'项目数量', data:monthNums,
-          fill:true, backgroundColor:'rgba(59,130,246,0.1)',
-          borderColor:'rgba(59,130,246,1)', tension:0.3, pointRadius:4 }]
+        labels:sortedM.map(m => m.slice(5) + '月'),
+        datasets:[{
+          label:'项目数量',
+          data:monthNums,
+          fill:true,
+          backgroundColor:areaGrad,
+          borderColor:'#10b981',
+          borderWidth:2.5,
+          tension:0.35,
+          pointRadius:5,
+          pointBackgroundColor:'#fff',
+          pointBorderColor:'#10b981',
+          pointBorderWidth:2,
+          pointHoverRadius:7,
+          pointHoverBackgroundColor:'#10b981',
+          pointHoverBorderColor:'#fff',
+          pointHoverBorderWidth:2
+        }]
       },
-      options:{ responsive:true, plugins:{ legend:{ display:false } },
-        scales:{ y:{ beginAtZero:true, ticks:{ stepSize:1 } } } }
+      options:{
+        responsive:true,
+        maintainAspectRatio:false,
+        plugins:{
+          legend:{ display:false },
+          tooltip:{
+            backgroundColor:'rgba(30,41,59,0.92)',titleFont:{size:12,weight:'600'},
+            bodyFont:{size:11},padding:10,cornerRadius:8,
+            callbacks:{
+              title:function(items){ return sortedM[items[0].dataIndex]; },
+              label:function(ctx){ return ` ${ctx.parsed.y} 个项目`; }
+            }
+          }
+        },
+        scales:{
+          x:{ grid:{color:'rgba(148,163,184,0.06)'}, ticks:{font:{size:11}} },
+          y:{
+            beginAtZero:true,
+            grid:{color:'rgba(148,163,184,0.08)'},
+            ticks:{ stepSize:1, font:{size:10} }
+          }
+        }
+      }
     });
   }
 }
