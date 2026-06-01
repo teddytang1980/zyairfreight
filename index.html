@@ -697,6 +697,7 @@ textarea.editable-input.header-input{
       </div>
       <button class="btn btn-outline" onclick="exportToExcel()" style="margin-left:auto">📊 导出Excel</button>
       <button class="btn btn-warning" onclick="toggleEdit()" id="edit-toggle-btn">✏️ 编辑</button>
+      <button class="btn btn-outline" onclick="cancelEdit()" id="btn-cancel" style="display:none">↩️ 取消</button>
     </div>
 
     <!-- 状态条 -->
@@ -1884,10 +1885,12 @@ function toggleEdit() {
   const alert = document.getElementById('edit-alert');
   const dot = document.getElementById('status-dot');
   const txt = document.getElementById('status-text');
+  const cancelBtn = document.getElementById('btn-cancel');
   if (editMode) {
     // 进入编辑模式
     btn.textContent = '💾 保存';
     btn.className = 'btn btn-success';
+    cancelBtn.style.display = '';
     alert.style.display = 'flex';
     dot.className = 'status-dot edit';
     txt.textContent = '编辑中';
@@ -1896,6 +1899,7 @@ function toggleEdit() {
     saveData();
     btn.textContent = '✏️ 编辑';
     btn.className = 'btn btn-warning';
+    cancelBtn.style.display = 'none';
     alert.style.display = 'none';
     dot.className = 'status-dot locked';
     txt.textContent = '已锁定';
@@ -1903,6 +1907,45 @@ function toggleEdit() {
   setInputsReadonly(!canEdit());
   applyHeaderEditable();
   renderTable();
+}
+
+// ═══════════ 取消编辑 ═══════════
+function cancelEdit() {
+  if (!isAdmin()) return;
+  // 从 localStorage 重新加载数据，丢弃未保存的修改
+  const raw = localStorage.getItem(KEY_DATA);
+  if (raw) {
+    try {
+      const parsed = JSON.parse(raw);
+      if (parsed && parsed.rows && parsed.headers && parsed.headersVersion === HEADERS_VERSION) {
+        appData = parsed;
+      } else {
+        appData = { rows: JSON.parse(JSON.stringify(DEFAULT_ROWS)), headers: JSON.parse(JSON.stringify(DEFAULT_HEADERS)), headersVersion: HEADERS_VERSION };
+      }
+    } catch (e) {
+      appData = { rows: JSON.parse(JSON.stringify(DEFAULT_ROWS)), headers: JSON.parse(JSON.stringify(DEFAULT_HEADERS)), headersVersion: HEADERS_VERSION };
+    }
+  } else {
+    appData = { rows: JSON.parse(JSON.stringify(DEFAULT_ROWS)), headers: JSON.parse(JSON.stringify(DEFAULT_HEADERS)), headersVersion: HEADERS_VERSION };
+  }
+  // 退出编辑模式
+  editMode = false;
+  const btn = document.getElementById('edit-toggle-btn');
+  const cancelBtn = document.getElementById('btn-cancel');
+  const alert = document.getElementById('edit-alert');
+  const dot = document.getElementById('status-dot');
+  const txt = document.getElementById('status-text');
+  btn.textContent = '✏️ 编辑';
+  btn.className = 'btn btn-warning';
+  cancelBtn.style.display = 'none';
+  alert.style.display = 'none';
+  dot.className = 'status-dot locked';
+  txt.textContent = '已锁定';
+  setInputsReadonly(!canEdit());
+  applyHeaderEditable();
+  renderTable();
+  applyFilters();
+  showToast('已取消编辑，数据已恢复', 'info');
 }
 
 // ═══════════ 保存 ═══════════
@@ -2261,8 +2304,7 @@ function exportToExcel() {
     null, null, null, null,                 // 4个空占位（共5列）
     { v: h.group3 || '航司危险品费用', s: {} }, // colspan 5
     null, null, null, null,                 // 4个空占位（共5列）
-    { v: '备注' },
-    { v: '操作' }
+    { v: '备注' }
   ];
 
   // ── 第2行：子表头 ──
@@ -2273,8 +2315,7 @@ function exportToExcel() {
     h.h_k || '', (h.h_l || '').replace(/\n/g, '\n'), (h.h_m || '').replace(/\n/g, '\n'),
     h.h_n || '', h.h_o || '',
     h.h_p || '', h.h_q || '', h.h_r || '', (h.h_s || '').replace(/\n/g, '\n'), (h.h_t || '').replace(/\n/g, '\n'),
-    null, // 备注 rowspan2
-    null  // 操作
+    null  // 备注 rowspan2
   ];
 
   // ── 统一样式定义 ──
@@ -2310,7 +2351,7 @@ function exportToExcel() {
     'p','q','r','s','t',
     'remark'
   ];
-  const totalCols = 22; // 21数据列 + 操作列
+  const totalCols = 21; // 21数据列（无操作列）
 
   // 构建单元格数据
   const cells = [];
@@ -2325,7 +2366,6 @@ function exportToExcel() {
   r1[10] = { v: h.group2 || '航司空运费用', s: groupStyle };
   r1[15] = { v: h.group3 || '航司危险品费用', s: groupStyle };
   r1[20] = { v: '备注', s: groupStyle };
-  r1[21] = { v: '操作', s: groupStyle };
   cells.push(r1);
 
   // 第2行：子表头
@@ -2360,7 +2400,6 @@ function exportToExcel() {
       const display = (v === null || v === undefined || v === '') ? '' : v;
       return { v: display, t: typeof display === 'number' ? 'n' : 's', s: JSON.parse(JSON.stringify(dataStyle)) };
     });
-    dataRow.push({ v: '', s: dataStyle }); // 操作列空白
     cells.push(dataRow);
   });
 
@@ -2379,12 +2418,11 @@ function exportToExcel() {
 
   // ── 合并单元格 ──
   ws['!merges'] = [
-    // 第1行：货型/线路/币种/备注/操作 纵向合并2行
+    // 第1行：货型/线路/币种/备注 纵向合并2行
     { s: { r: 0, c: 0 }, e: { r: 1, c: 0 } },  // 货型
     { s: { r: 0, c: 1 }, e: { r: 1, c: 1 } },  // 线路
     { s: { r: 0, c: 2 }, e: { r: 1, c: 2 } },  // 币种
     { s: { r: 0, c: 20 }, e: { r: 1, c: 20 } }, // 备注
-    { s: { r: 0, c: 21 }, e: { r: 1, c: 21 } }, // 操作
     // 第1行：地面费用 横向合并7列
     { s: { r: 0, c: 3 }, e: { r: 0, c: 9 } },
     // 第1行：航司空运费用 横向合并5列
