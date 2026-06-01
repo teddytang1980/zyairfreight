@@ -442,31 +442,54 @@ textarea.editable-input.header-input{
 .ss-form-row select:focus,.ss-form-row input:focus{border-color:var(--blue-500);box-shadow:0 0 0 2px rgba(59,130,246,0.08);}
 .ss-form-row label{font-size:12px;color:var(--slate-500);display:block;margin-bottom:3px;}
 
-/* 项目卡片 */
-.project-card{
-  background:var(--white);border:1px solid var(--slate-200);border-radius:var(--radius);
-  margin-bottom:12px;overflow:hidden;box-shadow:var(--shadow-sm);transition:box-shadow .15s;
+/* 项目清单表格 */
+.projects-table-wrap{overflow-x:auto;margin-top:12px;border:1px solid var(--slate-200);border-radius:var(--radius);background:var(--white);box-shadow:var(--shadow-sm);}
+.projects-table{width:100%;border-collapse:collapse;font-size:13px;min-width:1500px;}
+.projects-table thead th{
+  position:sticky;top:0;background:var(--slate-800);color:#fff;
+  padding:10px 8px;font-weight:600;font-size:12px;text-align:center;
+  white-space:nowrap;border-right:1px solid rgba(255,255,255,0.15);
 }
-.project-card:hover{box-shadow:var(--shadow-md);}
-.project-card .pc-header{
-  padding:0;display:flex;flex-direction:column;
-  cursor:pointer;user-select:none;background:var(--slate-50);border-bottom:1px solid var(--slate-100);
+.projects-table thead th:last-child{border-right:none;}
+.projects-table tbody td{
+  padding:8px 6px;text-align:center;border-bottom:1px solid var(--slate-100);
+  vertical-align:middle;font-size:13px;
 }
-.project-card .pc-header.expanded{background:linear-gradient(135deg,var(--blue-50),#eef2ff);border-bottom-color:var(--blue-100);}
-.project-card .pc-row{display:flex;align-items:center;justify-content:space-between;padding:8px 16px;gap:10px;}
-.project-card .pc-row1{border-bottom:1px solid var(--slate-100);}
-.project-card .pc-row1 .pc-field{font-size:15px;color:var(--slate-700);display:flex;align-items:center;gap:4px;}
-.project-card .pc-row1 .pc-field .pc-label{font-size:13px;color:var(--slate-400);font-weight:400;}
-.project-card .pc-row1 .pc-main-id{font-weight:700;font-size:17px;color:var(--blue-700);font-family:monospace;}
-.project-card .pc-row2{font-size:14px;color:var(--slate-500);display:flex;gap:8px;align-items:center;flex-wrap:wrap;justify-content:flex-start;}
-.project-card .pc-row2 .pc-tag{display:inline-flex;align-items:center;gap:3px;padding-right:4px;}
-.project-card .pc-badge{
-  padding:2px 8px;border-radius:10px;font-size:11px;font-weight:600;
-  background:var(--blue-100);color:var(--blue-700);
+.projects-table tbody tr.pt-row{cursor:pointer;transition:background .15s;}
+.projects-table tbody tr.pt-row:hover{background:var(--blue-50);}
+.projects-table tbody tr.pt-row.expanded{background:linear-gradient(135deg,var(--blue-50),#eef2ff);}
+.projects-table .pt-id{font-weight:700;color:var(--blue-700);font-family:monospace;font-size:14px;}
+.projects-table .pt-mawb{font-family:monospace;font-size:12px;}
+.projects-table .pt-company{max-width:120px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.projects-table .pt-route{max-width:150px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:12px;}
+.projects-table .pt-flight{font-family:monospace;font-size:12px;}
+.projects-table .pt-depart{font-size:11px;white-space:nowrap;}
+.projects-table .pt-status{padding:2px 8px;border-radius:10px;font-size:11px;font-weight:600;}
+.projects-table .pt-status.待出发{background:#dbeafe;color:#1d4ed8;}
+.projects-table .pt-status.延误{background:#fef3c7;color:#b45309;}
+.projects-table .pt-status.完成{background:#d1fae5;color:#047857;}
+.projects-table .pt-dg{font-weight:600;}
+.projects-table .pt-dg.yes{color:#dc2626;}
+.projects-table .pt-dg.no{color:#16a34a;}
+.projects-table .pt-money{font-weight:600;color:var(--slate-700);white-space:nowrap;}
+.projects-table .pt-total{font-weight:700;color:var(--blue-700);font-size:14px;white-space:nowrap;}
+.projects-table .pt-na{color:var(--slate-300);font-size:12px;}
+.projects-table .pt-actions{display:flex;gap:4px;justify-content:center;}
+.projects-table .pt-actions button{
+  padding:3px 8px;font-size:12px;border:none;border-radius:4px;cursor:pointer;
+  transition:all .15s;font-weight:500;white-space:nowrap;
 }
-.project-card .pc-actions{display:flex;gap:6px;}
-.project-card .pc-body{display:none;padding:16px 20px;}
-.project-card .pc-body.show{display:block;}
+.projects-table .pt-btn-edit{background:var(--blue-100);color:var(--blue-700);}
+.projects-table .pt-btn-edit:hover{background:var(--blue-600);color:#fff;}
+.projects-table .pt-btn-del{background:#fee2e2;color:#dc2626;}
+.projects-table .pt-btn-del:hover{background:#dc2626;color:#fff;}
+.projects-table .pt-btn-add{background:var(--green-100, #d1fae5);color:var(--green-700, #047857);}
+.projects-table .pt-btn-add:hover{background:var(--green-600, #16a34a);color:#fff;}
+/* 展开详情行 */
+.projects-table tr.pt-detail-row{display:none;background:var(--slate-50);}
+.projects-table tr.pt-detail-row.show{display:table-row;}
+.projects-table tr.pt-detail-row td{padding:0;border-bottom:2px solid var(--blue-200);}
+.pt-detail-wrap{padding:12px 16px;}
 
 /* 项目卡片摘要条 */
 .pc-summary-bar{
@@ -1501,57 +1524,88 @@ function clearAllProjects() {
 
 function renderProjects() {
   const container = document.getElementById('projects-list');
-  const statusLabel = { '待出发': '待出发', '已出发': '已出发', '已到达': '已到达', '已签收': '已签收' };
-  let html = '';
-  projects.forEach(p => {
-    const hasResults = p.results && p.results.subResults && p.results.subResults.length > 0;
-    const hasDG = p.hasDG;
-    const routes = p.subShipments ? [...new Set(p.subShipments.map(s => s.route))].join(', ') : '';
-    const summaryHtml = hasResults
-      ? `<div class="pc-summary-bar">
-          <div class="psb-item"><span class="psb-label">分单数</span><span class="psb-value">${p.subShipments.length}</span></div>
-          <div class="psb-total"><span class="psb-label">主单总计</span><span class="psb-value">¥${p.results.mainTotal.toLocaleString('zh-CN',{minimumFractionDigits:2})}</span></div>
-        </div>`
-      : '';
-    const pStatus = p.status || '待出发';
-    const depTime = p.departureTime ? new Date(p.departureTime).toLocaleString('zh-CN', {year:'numeric',month:'2-digit',day:'2-digit',hour:'2-digit',minute:'2-digit'}) : '';
+  const statusLabel = { '待出发': '待出发', '已出发': '已出发', '已到达': '已到达', '已签收': '已签收', '延误': '延误', '完成': '完成' };
+  if (!projects.length) {
+    container.innerHTML = '<div class="empty-state"><p>暂无项目</p><p>点击「+ 新建项目」开始创建</p></div>';
+    return;
+  }
 
-    html += `<div class="project-card" id="pj-${p.id}">
-      <div class="pc-header" onclick="toggleProject('${p.id}')">
-        <div class="pc-row pc-row1">
-          <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap">
-            <span class="pc-field"><span class="pc-main-id">${p.id}</span></span>
-            <span class="pc-field"><span class="pc-label">航司编号</span> ${p.mawb||'—'}</span>
-            <span class="pc-field"><span class="pc-label">委托公司</span> ${p.company||'—'}</span>
-            <span class="pc-badge">${hasResults ? '¥' + p.results.mainTotal.toLocaleString('zh-CN',{minimumFractionDigits:2}) : '未计算'}</span>
-          </div>
-          <div class="pc-actions" onclick="event.stopPropagation()">
-            <button class="btn btn-outline" style="font-size:13px;padding:3px 10px" onclick="editProject('${p.id}')">✏️ 编辑</button>
-            <button class="btn btn-danger" style="font-size:13px;padding:3px 10px" onclick="deleteProject('${p.id}')">删除</button>
-          </div>
-        </div>
-        <div class="pc-row pc-row2">
-          <span class="pc-tag">📍 ${routes||'—'}</span>
-          <span class="pc-tag">✈ ${p.flightNo||'—'}</span>
-          <span class="pc-tag">${hasDG ? '⚠️ 有危险品' : '✅ 无危险品'}</span>
-          ${depTime ? `<span class="pc-tag">🚀 ${depTime}</span>` : ''}
-          <span class="status-badge ${pStatus}">${statusLabel[pStatus]}</span>
-        </div>
-      </div>
-      ${summaryHtml}
-      ${hasResults ? renderProjectResults(p) : '<div class="pc-body"><p style="color:var(--slate-400);font-size:13px;text-align:center;padding:20px">尚未计算，点击「编辑」后计算报价</p></div>'}
-    </div>`;
+  // 预处理：为每个项目计算汇总列
+  const summaries = projects.map(p => {
+    const hasResults = p.results && p.results.subResults && p.results.subResults.length > 0;
+    const hasDG = p.hasDG || false;
+    const routes = p.subShipments ? [...new Set(p.subShipments.map(s => s.route))].join(', ') : '';
+    let groundSum = null, freightSum = null, dgSum = null, combineSum = null, mainTotal = null;
+    if (hasResults && p.results.subResults) {
+      const sr = p.results.subResults;
+      groundSum = sr.reduce((s, r) => s + (r.groundTotal || 0), 0);
+      freightSum = sr.reduce((s, r) => s + (r.freightTotal || 0), 0);
+      dgSum = sr.reduce((s, r) => s + (r.dgTotal || 0), 0);
+      combineSum = (p.results.mainUnloadingFee || 0) + (p.results.mainDGFee || 0);
+      mainTotal = p.results.mainTotal;
+    }
+    return { p, hasResults, hasDG, routes, groundSum, freightSum, dgSum, combineSum, mainTotal };
   });
+
+  const round2 = v => v != null ? v.toFixed(2) : null;
+  const money = v => v != null ? '¥' + Number(v).toLocaleString('zh-CN', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) : '<span class="pt-na">—</span>';
+
+  let html = `<div class="projects-table-wrap"><table class="projects-table">
+  <thead><tr>
+    <th>业务主编号</th><th>主单航司编号</th><th>委托公司名称</th><th>线路</th><th>航班号</th>
+    <th>预计出发时间</th><th>状态</th><th>是否有危险品</th>
+    <th>地面港费用</th><th>航司空运费</th><th>航司危险品费用</th>
+    <th>卸货+危险品<br>(每主单)</th><th>主单总价格</th><th>操作</th>
+  </tr></thead><tbody>`;
+
+  summaries.forEach(({ p, hasResults, hasDG, routes, groundSum, freightSum, dgSum, combineSum, mainTotal }, idx) => {
+    const pStatus = p.status || '待出发';
+    const depTime = p.departureTime ? new Date(p.departureTime).toLocaleString('zh-CN', { year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit' }) : '';
+    const dgClass = hasDG ? 'yes' : 'no';
+    const dgText = hasDG ? '⚠️ 有' : '✅ 无';
+    const detailId = 'pt-detail-' + p.id;
+
+    html += `<tr class="pt-row" id="pt-row-${p.id}" onclick="toggleProjectRow('${p.id}')">
+      <td><span class="pt-id">${p.id}</span></td>
+      <td><span class="pt-mawb">${p.mawb || '—'}</span></td>
+      <td><span class="pt-company" title="${(p.company || '—').replace(/"/g, '&quot;')}">${p.company || '—'}</span></td>
+      <td><span class="pt-route" title="${(routes || '—').replace(/"/g, '&quot;')}">${routes || '—'}</span></td>
+      <td><span class="pt-flight">${p.flightNo || '—'}</span></td>
+      <td><span class="pt-depart">${depTime || '—'}</span></td>
+      <td><span class="pt-status ${pStatus}">${statusLabel[pStatus] || pStatus}</span></td>
+      <td><span class="pt-dg ${dgClass}">${dgText}</span></td>
+      <td><span class="pt-money">${money(groundSum)}</span></td>
+      <td><span class="pt-money">${money(freightSum)}</span></td>
+      <td><span class="pt-money">${money(dgSum)}</span></td>
+      <td><span class="pt-money">${money(combineSum)}</span></td>
+      <td><span class="pt-total">${money(mainTotal)}</span></td>
+      <td><div class="pt-actions" onclick="event.stopPropagation()">
+        <button class="pt-btn-edit" onclick="editProject('${p.id}')" title="编辑项目">✏️</button>
+        <button class="pt-btn-del" onclick="deleteProject('${p.id}')" title="删除项目">🗑</button>
+        <button class="pt-btn-add" onclick="showNewProjectForm()" title="新建项目">➕</button>
+      </div></td>
+    </tr>
+    <tr class="pt-detail-row" id="${detailId}">
+      <td colspan="14"><div class="pt-detail-wrap">${hasResults ? renderProjectResults(p) : '<p style="color:var(--slate-400);font-size:13px;text-align:center;padding:20px">尚未计算，点击 ✏️ 编辑后计算报价</p>'}</div></td>
+    </tr>`;
+  });
+
+  html += '</tbody></table></div>';
   container.innerHTML = html;
 }
 
-function toggleProject(id) {
-  const body = document.querySelector(`#pj-${id} .pc-body`);
-  const header = document.querySelector(`#pj-${id} .pc-header`);
-  if (body) {
-    body.classList.toggle('show');
-    header.classList.toggle('expanded');
+function toggleProjectRow(id) {
+  const row = document.getElementById('pt-row-' + id);
+  const detail = document.getElementById('pt-detail-' + id);
+  if (detail) {
+    detail.classList.toggle('show');
+    row.classList.toggle('expanded');
   }
+}
+
+function toggleProject(id) {
+  // 兼容旧调用，转发到 toggleProjectRow
+  toggleProjectRow(id);
 }
 
 function renderProjectResults(p) {
@@ -2401,10 +2455,10 @@ function exportToExcel() {
     alignment: { horizontal: 'center', vertical: 'center', wrapText: true },
     border: borderAll
   };
-  // 数据单元格样式
+  // 数据单元格样式（所有单元格自动换行）
   const dataStyle = {
     font: { name: '微软雅黑', sz: 10 },
-    alignment: { horizontal: 'center', vertical: 'center' },
+    alignment: { horizontal: 'center', vertical: 'center', wrapText: true },
     border: borderAll
   };
 
@@ -2453,7 +2507,7 @@ function exportToExcel() {
     (h.h_r || '').replace(/\n/g, ' '),
     (h.h_s || '').replace(/\n/g, ' '),
     (h.h_t || '').replace(/\n/g, ' '),
-    null, null  // 备注/操作 rowspan2
+    null  // 备注 rowspan2
   ];
   const r2 = subHeaders.map(v => ({ v: v || '', s: subStyle }));
   cells.push(r2);
