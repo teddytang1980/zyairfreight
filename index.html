@@ -1047,7 +1047,7 @@ const DEFAULT_USERS = [
 
 // 数据完全来自 Excel，30条（DG 15条 + NDG 15条）
 const DEFAULT_ROWS = [
-  // ── DG 危险品（行4~18）──
+  // -- DG 危险品（行4~18）--
   { id:1, type:'DG', route:'香港-上海', currency:'RMB', d_min:360, d_kg:2.45, f_min:230, f_kg:1, h:317, i:317, j:155, k:585, l:3.19, m:3.15, n:3.7, o:1.8, p:1350, q:126, r:13, s:120, t:550, remark:'注意事项：如货站安检机/飞机限制的卡板尺寸、每托盘/纸箱的限重' },
   { id:2, type:'DG', route:'香港-北京', currency:'RMB', d_min:360, d_kg:2.45, f_min:230, f_kg:1, h:317, i:317, j:155, k:585, l:5.92, m:5.85, n:3.7, o:1.8, p:1350, q:126, r:16.5, s:120, t:550, remark:'' },
   { id:3, type:'DG', route:'香港-杭州', currency:'RMB', d_min:360, d_kg:2.45, f_min:230, f_kg:1, h:317, i:317, j:155, k:585, l:5.19, m:5.13, n:3.7, o:1.8, p:1350, q:126, r:11, s:120, t:550, remark:'' },
@@ -1063,23 +1063,23 @@ const DEFAULT_ROWS = [
   { id:13, type:'DG', route:'香港-长沙', currency:'RMB', d_min:360, d_kg:2.45, f_min:230, f_kg:1, h:317, i:317, j:155, k:585, l:6.05, m:3.75, n:3.7, o:1.8, p:1350, q:126, r:11, s:120, t:550, remark:'' },
   { id:14, type:'DG', route:'香港-昆明', currency:'RMB', d_min:360, d_kg:2.45, f_min:230, f_kg:1, h:317, i:317, j:155, k:585, l:13, m:8.97, n:3.7, o:1.8, p:1350, q:126, r:16.5, s:120, t:550, remark:'' },
   { id:15, type:'DG', route:'香港-广州', currency:'RMB', d_min:360, d_kg:2.45, f_min:230, f_kg:1, h:317, i:317, j:155, k:585, l:18, m:2.86, n:3.7, o:1.8, p:1350, q:126, r:16.5, s:120, t:550, remark:'' },
-  // ── NDG 普通货（行19~33）──
-  { id:16, type:'NDG', route:'香港-上海', currency:'RMB', d_min:360, d_kg:2.45, f_min:28, f_kg:0.73, h:317, i:317, j:155, k:405, l:3.19, m:3.15, n:3.7, o:1.8, p:null, q:null, r:null, s:null, t:null, remark:'注意事项：如飞机限制的卡板尺寸、每托盘/纸箱的限重' },
-  { id:17, type:'NDG', route:'香港-北京', currency:'RMB', d_min:360, d_kg:2.45, f_min:28, f_kg:0.73, h:317, i:317, j:155, k:405, l:5.92, m:5.85, n:3.7, o:1.8, p:null, q:null, r:null, s:null, t:null, remark:'' },
-  { id:18, type:'NDG', route:'香港-杭州', currency:'RMB', d_min:360, d_kg:2.45, f_min:28, f_kg:0.73, h:317, i:317, j:155, k:405, l:5.19, m:5.13, n:3.7, o:1.8, p:null, q:null, r:null, s:null, t:null, remark:'' },
-  { id:19, type:'NDG', route:'香港-成都', currency:'RMB', d_min:360, d_kg:2.45, f_min:28, f_kg:0.73, h:317, i:317, j:155, k:405, l:5.92, m:5.85, n:3.7, o:1.8, p:null, q:null, r:null, s:null, t:null, remark:'' },
-  { id:20, type:'NDG', route:'香港-南京', currency:'RMB', d_min:360, d_kg:2.45, f_min:28, f_kg:0.73, h:317, i:317, j:155, k:405, l:5.19, m:5.13, n:3.7, o:1.8, p:null, q:null, r:null, s:null, t:null, remark:'' },
-  { id:21, type:'NDG', route:'香港-大连', currency:'RMB', d_min:360, d_kg:2.45, f_min:28, f_kg:0.73, h:317, i:317, j:155, k:405, l:20, m:12.7, n:3.7, o:1.8, p:null, q:null, r:null, s:null, t:null, remark:'' },
-  { id:22, type:'NDG', route:'香港-重庆', currency:'RMB', d_min:360, d_kg:2.45, f_min:28, f_kg:0.73, h:317, i:317, j:155, k:405, l:5.92, m:5.85, n:3.7, o:1.8, p:null, q:null, r:null, s:null, t:null, remark:'' },
-  { id:23, type:'NDG', route:'香港-厦门', currency:'RMB', d_min:360, d_kg:2.45, f_min:28, f_kg:0.73, h:317, i:317, j:155, k:405, l:4.83, m:4.77, n:3.7, o:1.8, p:null, q:null, r:null, s:null, t:null, remark:'' },
-  { id:24, type:'NDG', route:'香港-青岛', currency:'RMB', d_min:360, d_kg:2.45, f_min:28, f_kg:0.73, h:317, i:317, j:155, k:405, l:8.65, m:8.56, n:3.7, o:1.8, p:null, q:null, r:null, s:null, t:null, remark:'' },
-  { id:25, type:'NDG', route:'香港-天津', currency:'RMB', d_min:360, d_kg:2.45, f_min:28, f_kg:0.73, h:317, i:317, j:155, k:405, l:17.35, m:5, n:3.7, o:1.8, p:null, q:null, r:null, s:null, t:null, remark:'' },
-  { id:26, type:'NDG', route:'香港-西安', currency:'RMB', d_min:360, d_kg:2.45, f_min:28, f_kg:0.73, h:317, i:317, j:155, k:405, l:5.92, m:5.85, n:3.7, o:1.8, p:null, q:null, r:null, s:null, t:null, remark:'' },
-  { id:27, type:'NDG', route:'香港-武汉', currency:'RMB', d_min:360, d_kg:2.45, f_min:28, f_kg:0.73, h:317, i:317, j:155, k:405, l:5.92, m:5.85, n:3.7, o:1.8, p:null, q:null, r:null, s:null, t:null, remark:'' },
-  { id:28, type:'NDG', route:'香港-长沙', currency:'RMB', d_min:360, d_kg:2.45, f_min:28, f_kg:0.73, h:317, i:317, j:155, k:405, l:6.05, m:3.75, n:3.7, o:1.8, p:null, q:null, r:null, s:null, t:null, remark:'' },
-  { id:29, type:'NDG', route:'香港-昆明', currency:'RMB', d_min:360, d_kg:2.45, f_min:28, f_kg:0.73, h:317, i:317, j:155, k:405, l:13, m:8.97, n:3.7, o:1.8, p:null, q:null, r:null, s:null, t:null, remark:'' },
-  { id:30, type:'NDG', route:'香港-广州', currency:'RMB', d_min:360, d_kg:2.45, f_min:28, f_kg:0.73, h:317, i:317, j:155, k:405, l:18, m:2.86, n:3.7, o:1.8, p:null, q:null, r:null, s:null, t:null, remark:'' },
-];
+  // -- NDG 非危险品（行19~33）--
+  { id:16, type:'NDG', route:'香港-上海', currency:'RMB', d_min:360, d_kg:2.45, f_min:28, f_kg:0.73, h:317, i:317, j:155, k:405, l:3.19, m:3.15, n:3.7, o:1.8, p:0, q:0, r:0, s:0, t:0, remark:'注意事项：如飞机限制的卡板尺寸、每托盘/纸箱的限重' },
+  { id:17, type:'NDG', route:'香港-北京', currency:'RMB', d_min:360, d_kg:2.45, f_min:28, f_kg:0.73, h:317, i:317, j:155, k:405, l:5.92, m:5.85, n:3.7, o:1.8, p:0, q:0, r:0, s:0, t:0, remark:'' },
+  { id:18, type:'NDG', route:'香港-杭州', currency:'RMB', d_min:360, d_kg:2.45, f_min:28, f_kg:0.73, h:317, i:317, j:155, k:405, l:5.19, m:5.13, n:3.7, o:1.8, p:0, q:0, r:0, s:0, t:0, remark:'' },
+  { id:19, type:'NDG', route:'香港-成都', currency:'RMB', d_min:360, d_kg:2.45, f_min:28, f_kg:0.73, h:317, i:317, j:155, k:405, l:5.92, m:5.85, n:3.7, o:1.8, p:0, q:0, r:0, s:0, t:0, remark:'' },
+  { id:20, type:'NDG', route:'香港-南京', currency:'RMB', d_min:360, d_kg:2.45, f_min:28, f_kg:0.73, h:317, i:317, j:155, k:405, l:5.19, m:5.13, n:3.7, o:1.8, p:0, q:0, r:0, s:0, t:0, remark:'' },
+  { id:21, type:'NDG', route:'香港-大连', currency:'RMB', d_min:360, d_kg:2.45, f_min:28, f_kg:0.73, h:317, i:317, j:155, k:405, l:20, m:12.7, n:3.7, o:1.8, p:0, q:0, r:0, s:0, t:0, remark:'' },
+  { id:22, type:'NDG', route:'香港-重庆', currency:'RMB', d_min:360, d_kg:2.45, f_min:28, f_kg:0.73, h:317, i:317, j:155, k:405, l:5.92, m:5.85, n:3.7, o:1.8, p:0, q:0, r:0, s:0, t:0, remark:'' },
+  { id:23, type:'NDG', route:'香港-厦门', currency:'RMB', d_min:360, d_kg:2.45, f_min:28, f_kg:0.73, h:317, i:317, j:155, k:405, l:4.83, m:4.77, n:3.7, o:1.8, p:0, q:0, r:0, s:0, t:0, remark:'' },
+  { id:24, type:'NDG', route:'香港-青岛', currency:'RMB', d_min:360, d_kg:2.45, f_min:28, f_kg:0.73, h:317, i:317, j:155, k:405, l:8.65, m:8.56, n:3.7, o:1.8, p:0, q:0, r:0, s:0, t:0, remark:'' },
+  { id:25, type:'NDG', route:'香港-天津', currency:'RMB', d_min:360, d_kg:2.45, f_min:28, f_kg:0.73, h:317, i:317, j:155, k:405, l:17.35, m:5, n:3.7, o:1.8, p:0, q:0, r:0, s:0, t:0, remark:'' },
+  { id:26, type:'NDG', route:'香港-西安', currency:'RMB', d_min:360, d_kg:2.45, f_min:28, f_kg:0.73, h:317, i:317, j:155, k:405, l:5.92, m:5.85, n:3.7, o:1.8, p:0, q:0, r:0, s:0, t:0, remark:'' },
+  { id:27, type:'NDG', route:'香港-武汉', currency:'RMB', d_min:360, d_kg:2.45, f_min:28, f_kg:0.73, h:317, i:317, j:155, k:405, l:5.92, m:5.85, n:3.7, o:1.8, p:0, q:0, r:0, s:0, t:0, remark:'' },
+  { id:28, type:'NDG', route:'香港-长沙', currency:'RMB', d_min:360, d_kg:2.45, f_min:28, f_kg:0.73, h:317, i:317, j:155, k:405, l:6.05, m:3.75, n:3.7, o:1.8, p:0, q:0, r:0, s:0, t:0, remark:'' },
+  { id:29, type:'NDG', route:'香港-昆明', currency:'RMB', d_min:360, d_kg:2.45, f_min:28, f_kg:0.73, h:317, i:317, j:155, k:405, l:13, m:8.97, n:3.7, o:1.8, p:0, q:0, r:0, s:0, t:0, remark:'' },
+  { id:30, type:'NDG', route:'香港-广州', currency:'RMB', d_min:360, d_kg:2.45, f_min:28, f_kg:0.73, h:317, i:317, j:155, k:405, l:18, m:2.86, n:3.7, o:1.8, p:0, q:0, r:0, s:0, t:0, remark:'' },
+];;
 
 const DEFAULT_DATA = {
   validity: { start: '2025-01-01', end: '2025-12-31' },
@@ -1093,7 +1093,7 @@ let appData = null;
 let users = [];
 let nextId = 100;
 let editMode = false; // 编辑模式开关：默认锁定，点击"编辑"后解锁
-const HEADERS_VERSION = 3; // 表头版本号：每次修改DEFAULT_HEADERS后递增，强制同步旧缓存
+const HEADERS_VERSION = 4; // 表头版本号：每次修改DEFAULT_HEADERS后递增，强制同步旧缓存
 
 // ═══════════ Supabase 初始化 ═══════════
 const SUPABASE_URL = 'https://aepvhmxuatuhoxqgqxzx.supabase.co';
@@ -1136,7 +1136,7 @@ function ensureLocalDefaults() {
 ensureLocalDefaults();
 
 // appData 作为内存缓存（报价查询表数据仍用 localStorage 兼容）
-const KEY_DATA = 'airfreight_data_v3';
+const KEY_DATA = 'airfreight_data_v4';;
 
 let projects = []; // { id, company, mawb, subShipments, results, createdAt }
 let currentProjectId = null; // editing project
