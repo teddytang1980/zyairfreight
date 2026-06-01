@@ -643,6 +643,7 @@ textarea.editable-input.header-input{
   #login-screen { display: none !important; }
   #app { display: flex !important; }
 </style>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js"></script>
 </head>
 <body>
 
@@ -736,6 +737,7 @@ textarea.editable-input.header-input{
       <div class="nav-tab active" onclick="switchTab('tab1')" id="nav-tab1">📋 报价查询表</div>
       <div class="nav-tab" onclick="switchTab('tab2')" id="nav-tab2">📄 空运报价表</div>
       <div class="nav-tab" onclick="switchTab('tab3')" id="nav-tab3">⚙️ 权限配置</div>
+      <div class="nav-tab" onclick="switchTab(tab4)" id="nav-tab4">📊 看板</div>
     </div>
     <div class="topbar-right">
       <div class="user-badge">
@@ -907,17 +909,17 @@ textarea.editable-input.header-input{
                  onfocus="this.style.borderColor='var(--blue-500)';this.style.boxShadow='0 0 0 3px rgba(59,130,246,0.1)'"
                  onblur="this.style.borderColor='var(--slate-200)';this.style.boxShadow='none'" />
           <!-- 出发时间筛选 -->
-          <select id="filter-departure" onchange="filterProjectsTable()"
-                  style="padding:5px 10px;border:1px solid var(--slate-200);border-radius:6px;font-size:13px;outline:none;cursor:pointer;background:#fff;appearance:none;-webkit-appearance:none;padding-right:24px;
-                  background-image:url(&quot;data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' fill='%2394a3b8'%3E%3Cpath d='M6 8L1 3h10z'/%3E%3C/svg%3E&quot;);
-                  background-repeat:no-repeat;background-position:right 8px center;transition:border-color .2s;"
-                  onfocus="this.style.borderColor='var(--blue-500)'" onblur="this.style.borderColor='var(--slate-200)'">
-            <option value="">全部出发时间</option>
-            <option value="today">今天</option>
-            <option value="week">本周</option>
-            <option value="month">本月</option>
-            <option value="delayed">已延误</option>
-          </select>
+          <!-- 出发时间筛选（日期范围） -->
+          <span style="display:inline-flex;align-items:center;gap:4px;font-size:12px;color:var(--slate-500);">
+            出发时间：
+          </span>
+          <input type="date" id="filter-departure-start" onchange="filterProjectsTable()"
+                 style="padding:4px 8px;border:1px solid var(--slate-200);border-radius:6px;font-size:13px;outline:none;transition:border-color .2s;"
+                 onfocus="this.style.borderColor='var(--blue-500)'" onblur="this.style.borderColor='var(--slate-200)'" />
+          <span style="font-size:12px;color:var(--slate-400);">至</span>
+          <input type="date" id="filter-departure-end" onchange="filterProjectsTable()"
+                 style="padding:4px 8px;border:1px solid var(--slate-200);border-radius:6px;font-size:13px;outline:none;transition:border-color .2s;"
+                 onfocus="this.style.borderColor='var(--blue-500)'" onblur="this.style.borderColor='var(--slate-200)'" />
           <!-- 状态筛选 -->
           <select id="filter-status" onchange="filterProjectsTable()"
                   style="padding:5px 10px;border:1px solid var(--slate-200);border-radius:6px;font-size:13px;outline:none;cursor:pointer;background:#fff;appearance:none;-webkit-appearance:none;padding-right:24px;
@@ -1734,13 +1736,9 @@ function clearAllProjects() {
 // 筛选总体项目清单表格
 function filterProjectsTable() {
   const searchVal = (document.getElementById('project-search')?.value || '').toLowerCase();
-  const depFilter = document.getElementById('filter-departure')?.value || '';
+  const depStart = document.getElementById('filter-departure-start')?.value || '';
+  const depEnd = document.getElementById('filter-departure-end')?.value || '';
   const statusFilter = document.getElementById('filter-status')?.value || '';
-  const now = new Date();
-  const todayStr = now.toISOString().slice(0, 10);
-  const weekStart = new Date(now);
-  weekStart.setDate(now.getDate() - now.getDay());
-  const monthStart = new Date(now.getFullYear(), now.getMonth(), 1);
 
   const rows = document.querySelectorAll('#projects-tbody .pt-row');
   rows.forEach(tr => {
@@ -1751,7 +1749,7 @@ function filterProjectsTable() {
     const company = (cells[2]?.textContent || '').toLowerCase();
     const route = (cells[3]?.textContent || '').toLowerCase();
     const flight = (cells[4]?.textContent || '').toLowerCase();
-    const depTime = (cells[5]?.textContent || '').toLowerCase();
+    const depTime = (cells[5]?.textContent || '').trim();
     const status = (cells[6]?.textContent || '').replace(/[\s\uFEFF]/g, '');
 
     // 模糊搜索：匹配业务主编号、主单航司编号、委托公司名称、线路、航班号
@@ -1760,19 +1758,15 @@ function filterProjectsTable() {
       matchSearch = id.includes(searchVal) || mawb.includes(searchVal) || company.includes(searchVal) || route.includes(searchVal) || flight.includes(searchVal);
     }
 
-    // 出发时间筛选
+    // 出发时间筛选（日期范围）
     let matchDep = true;
-    if (depFilter && depTime) {
-      const depDate = new Date(depTime);
-      if (depFilter === 'today') {
-        matchDep = depTime.startsWith(todayStr);
-      } else if (depFilter === 'week') {
-        matchDep = depDate >= weekStart && depDate <= now;
-      } else if (depFilter === 'month') {
-        matchDep = depDate >= monthStart && depDate <= now;
-      } else if (depFilter === 'delayed') {
-        // 已延误：预计出发时间 < 今天，且状态不是"完成"
-        matchDep = depDate < new Date(todayStr) && status !== '完成';
+    if (depStart || depEnd) {
+      if (!depTime) {
+        matchDep = false;
+      } else {
+        const depDateStr = depTime.split(' ')[0]; // 取日期部分
+        if (depStart && depDateStr < depStart) matchDep = false;
+        if (depEnd   && depDateStr > depEnd)   matchDep = false;
       }
     }
 
@@ -1831,7 +1825,7 @@ function renderProjects() {
       <td class="col-route"><span class="pt-route" title="${(routes || '—').replace(/"/g, '&quot;')}">${routes || '—'}</span></td>
       <td class="col-flight"><span class="pt-flight">${p.flightNo || '—'}</span></td>
       <td class="col-depart"><span class="pt-depart">${depTime || '—'}</span></td>
-      <td class="col-status"><span class="pt-status" ${pStatus}">${statusLabel[pStatus] || pStatus}</span></td>
+      <td class="col-status"><span class="pt-status ${pStatus}"">${statusLabel[pStatus] || pStatus}</span></td>
       <td class="col-dg"><span class="pt-dg" ${dgClass}">${dgText}</span></td>
       <td class="col-ground"><span class="pt-money">${money(groundSum)}</span></td>
       <td class="col-freight"><span class="pt-money">${money(freightSum)}</span></td>
@@ -1842,7 +1836,6 @@ function renderProjects() {
         <button class="pt-btn-edit" onclick="editProjectAndScroll('${p.id}')" title="编辑项目">✏️</button>
         <button class="pt-btn-del" onclick="deleteProject('${p.id}')" title="删除项目">🗑</button>
         <button class="pt-btn-add" onclick="event.stopPropagation();showNewProjectForm()" title="新建项目">➕</button>
-      </div></td>
     </tr>`;
   });
   tbody.innerHTML = tableHtml;
@@ -2200,6 +2193,7 @@ async function switchTab(tab) {
   if (tab === 'tab1') { loadHeadersToDOM(); applyHeaderEditable(); setTimeout(() => document.querySelectorAll('.header-input').forEach(inp => { if (inp.tagName === 'TEXTAREA') autoHeight(inp); }), 50); }
   if (tab === 'tab2') await renderProjects();
   if (tab === 'tab3' && canManageUsers()) await renderUsers();
+  if (tab === 'tab4') await renderKanban();
 }
 
 // ═══════════ 渲染表格 ═══════════
@@ -3016,6 +3010,120 @@ init().catch(err => {
   console.error('Init error:', err);
   alert('系统初始化失败: ' + err.message + '\n请刷新页面重试');
 });
+
+// ═══ 看板图表渲染 ═══
+let chartStatus = null, chartAmount = null, chartTimeline = null;
+// ═══ 看板图表渲染 ═══
+let chartStatus = null, chartAmount = null, chartTimeline = null;
+async function renderKanban() {
+  if (typeof Chart === 'undefined') { console.warn('Chart.js 未加载'); return; }
+  // 从 localStorage 或 Supabase 加载数据
+  let projects = [];
+  try {
+    const raw = localStorage.getItem('zy_airfreight_projects');
+    projects = raw ? JSON.parse(raw) : [];
+  } catch(e) { projects = []; }
+  
+  if (!projects.length) { console.log('暂无项目数据'); return; }
+
+  // ── 1. 状态分布（饼图）───
+  const statusCount = { '待出发': 0, '延误': 0, '完成': 0 };
+  projects.forEach(p => {
+    const s = (p.status || '待出发');
+    if (statusCount.hasOwnProperty(s)) statusCount[s]++;
+  });
+  const statusLabels = Object.keys(statusCount);
+  const statusData   = Object.values(statusCount);
+  const statusColors = ['#60a5fa', '#f87171', '#34d399'];
+
+  if (chartStatus) chartStatus.destroy();
+  const ctx1 = document.getElementById('chart-status');
+  if (ctx1) {
+    chartStatus = new Chart(ctx1, {
+      type:'doughnut',
+      data:{ labels:statusLabels, datasets:[{ data:statusData, backgroundColor:statusColors, borderWidth:2 }] },
+      options:{ responsive:true, plugins:{ legend:{ position:'bottom' } } }
+    });
+  }
+
+  // ── 2. 月度应收金额（柱状图）───
+  const monthMap = {};
+  projects.forEach(p => {
+    const t = p.departureTime || '';
+    const m = t ? t.slice(0,7) : '未知';
+    const v = parseFloat(p._mainTotal) || 0;
+    monthMap[m] = (monthMap[m] || 0) + v;
+  });
+  const sortedMonths = Object.keys(monthMap).sort();
+  const monthAmounts = sortedMonths.map(m => monthMap[m]);
+
+  if (chartAmount) chartAmount.destroy();
+  const ctx2 = document.getElementById('chart-amount');
+  if (ctx2) {
+    chartAmount = new Chart(ctx2, {
+      type:'bar',
+      data:{
+        labels:sortedMonths,
+        datasets:[{ label:'应收金额（元）', data:monthAmounts,
+          backgroundColor:'rgba(59,130,246,0.6)', borderColor:'rgba(59,130,246,1)', borderWidth:1 }]
+      },
+      options:{ responsive:true, plugins:{ legend:{ display:false } },
+        scales:{ y:{ beginAtZero:true } } }
+    });
+  }
+
+  // ── 3. 月度项目分布（折线图）───
+  const monthCount = {};
+  projects.forEach(p => {
+    const t = p.departureTime || '';
+    const m = t ? t.slice(0,7) : '未知';
+    monthCount[m] = (monthCount[m] || 0) + 1;
+  });
+  const sortedM = Object.keys(monthCount).sort();
+  const monthNums = sortedM.map(m => monthCount[m]);
+
+  if (chartTimeline) chartTimeline.destroy();
+  const ctx3 = document.getElementById('chart-timeline');
+  if (ctx3) {
+    chartTimeline = new Chart(ctx3, {
+      type:'line',
+      data:{
+        labels:sortedM,
+        datasets:[{ label:'项目数量', data:monthNums,
+          fill:true, backgroundColor:'rgba(59,130,246,0.1)',
+          borderColor:'rgba(59,130,246,1)', tension:0.3, pointRadius:4 }]
+      },
+      options:{ responsive:true, plugins:{ legend:{ display:false } },
+        scales:{ y:{ beginAtZero:true, ticks:{ stepSize:1 } } } }
+    });
+  }
+}
+
 </script>
+
+  <!-- ═══ 栏目四：看板 ═══ -->
+  <div class="page" id="tab4">
+    <div class="page-header">
+      <div class="page-title">📊 数据看板</div>
+    </div>
+    <div style="padding:20px;display:grid;grid-template-columns:1fr 1fr;gap:20px;">
+      <!-- 状态分布饼图 -->
+      <div style="background:#fff;border-radius:12px;padding:20px;box-shadow:0 1px 3px rgba(0,0,0,0.08);">
+        <div style="font-size:15px;font-weight:700;color:#1e293b;margin-bottom:16px;">项目状态分布</div>
+        <canvas id="chart-status"></canvas>
+      </div>
+      <!-- 应收金额分布柱状图 -->
+      <div style="background:#fff;border-radius:12px;padding:20px;box-shadow:0 1px 3px rgba(0,0,0,0.08);">
+        <div style="font-size:15px;font-weight:700;color:#1e293b;margin-bottom:16px;">月度应收金额（主单总价格）</div>
+        <canvas id="chart-amount"></canvas>
+      </div>
+      <!-- 时间分布图 -->
+      <div style="background:#fff;border-radius:12px;padding:20px;box-shadow:0 1px 3px rgba(0,0,0,0.08);grid-column:1/-1;">
+        <div style="font-size:15px;font-weight:700;color:#1e293b;margin-bottom:16px;">月度项目分布</div>
+        <canvas id="chart-timeline"></canvas>
+      </div>
+    </div>
+  </div>
+
 </body>
 </html>
