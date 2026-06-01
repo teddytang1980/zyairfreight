@@ -491,6 +491,36 @@ textarea.editable-input.header-input{
 .projects-table tr.pt-detail-row td{padding:0;border-bottom:2px solid var(--blue-200);}
 .pt-detail-wrap{padding:12px 16px;}
 
+/* 项目卡片 */
+.project-card{
+  background:var(--white);border:1px solid var(--slate-200);border-radius:var(--radius);
+  margin-bottom:12px;overflow:hidden;box-shadow:var(--shadow-sm);transition:box-shadow .15s;
+}
+.project-card:hover{box-shadow:var(--shadow-md);}
+.project-card .pc-header{
+  padding:0;display:flex;flex-direction:column;
+  cursor:pointer;user-select:none;background:var(--slate-50);border-bottom:1px solid var(--slate-100);
+}
+.project-card .pc-header.expanded{background:linear-gradient(135deg,var(--blue-50),#eef2ff);border-bottom-color:var(--blue-100);}
+.project-card .pc-row{display:flex;align-items:center;justify-content:space-between;padding:8px 16px;gap:10px;}
+.project-card .pc-row1{border-bottom:1px solid var(--slate-100);}
+.project-card .pc-row1 .pc-field{font-size:15px;color:var(--slate-700);display:flex;align-items:center;gap:4px;}
+.project-card .pc-row1 .pc-field .pc-label{font-size:13px;color:var(--slate-500);font-weight:400;}
+.project-card .pc-row1 .pc-main-id{font-weight:700;font-size:17px;color:var(--blue-700);font-family:monospace;}
+.project-card .pc-row2{font-size:14px;color:var(--slate-500);display:flex;gap:8px;align-items:center;flex-wrap:wrap;justify-content:flex-start;}
+.project-card .pc-row2 .pc-tag{display:inline-flex;align-items:center;gap:3px;padding-right:4px;}
+.project-card .pc-badge{
+  padding:2px 8px;border-radius:10px;font-size:13px;font-weight:600;
+  background:var(--blue-100);color:var(--blue-700);
+}
+.project-card .pc-actions{display:flex;gap:6px;}
+.project-card .pc-body{display:none;padding:16px 20px;}
+.project-card .pc-body.show{display:block;}
+/* 卡片表头标签（航司编号：、委托公司：深灰粗体） */
+.project-card .pc-label-bold{font-size:13px;color:var(--slate-700);font-weight:700;}
+.project-card .pc-total-right{font-size:13px;font-weight:700;color:var(--blue-700);}
+.project-card .pc-status-tag{font-size:13px;}
+
 /* 项目卡片摘要条 */
 .pc-summary-bar{
   display:grid;grid-template-columns:1fr 1fr 1fr 1fr 1.4fr;
@@ -834,32 +864,31 @@ textarea.editable-input.header-input{
       </div>
     </div>
 
-    <!-- 项目清单汇总表 -->
-    <div class="projects-table-wrapper" style="margin-top:20px">
-      <table class="projects-table" id="projects-table">
-        <thead>
-          <tr>
-            <th>业务主编号</th>
-            <th>主单航司编号</th>
-            <th>委托公司名称</th>
-            <th>线路</th>
-            <th>航班号</th>
-            <th>预计出发时间</th>
-            <th>状态</th>
-            <th>危险品</th>
-            <th>地面港费</th>
-            <th>航司空运费</th>
-            <th>航司危险品费</th>
-            <th>卸货+危险品<br>(每主单)</th>
-            <th>主单总价格</th>
-            <th>操作</th>
-          </tr>
-        </thead>
-        <tbody id="projects-tbody"></tbody>
-      </table>
+    <!-- 总体项目清单 -->
+    <div style="margin-top:20px">
+      <div style="font-size:15px;font-weight:700;color:var(--slate-700);margin-bottom:8px;display:flex;align-items:center;gap:6px">
+        <span>📊</span> 总体项目清单
+      </div>
+      <div class="projects-table-wrap">
+        <table class="projects-table" id="projects-table">
+          <thead><tr>
+            <th>业务主编号</th><th>主单航司编号</th><th>委托公司名称</th><th>线路</th><th>航班号</th>
+            <th>预计出发时间</th><th>状态</th><th>是否有危险品</th>
+            <th>地面港费用</th><th>航司空运费</th><th>航司危险品费用</th>
+            <th>卸货+危险品<br>(每主单)</th><th>主单总价格</th><th>操作</th>
+          </tr></thead>
+          <tbody id="projects-tbody"></tbody>
+        </table>
+      </div>
     </div>
 
-  <div id="projects-list"></div>
+    <!-- 项目卡片明细 -->
+    <div style="margin-top:20px">
+      <div style="font-size:15px;font-weight:700;color:var(--slate-700);margin-bottom:8px;display:flex;align-items:center;gap:6px">
+        <span>📋</span> 项目明细
+      </div>
+      <div id="projects-list"></div>
+    </div>
   </div>
 
   <!-- ═══ 栏目三：权限配置 ═══ -->
@@ -1523,9 +1552,12 @@ function clearAllProjects() {
 }
 
 function renderProjects() {
-  const container = document.getElementById('projects-list');
   const statusLabel = { '待出发': '待出发', '已出发': '已出发', '已到达': '已到达', '已签收': '已签收', '延误': '延误', '完成': '完成' };
+  const container = document.getElementById('projects-list');
+  const tbody = document.getElementById('projects-tbody');
+
   if (!projects.length) {
+    tbody.innerHTML = '<tr><td colspan="14" style="text-align:center;color:var(--slate-400);padding:20px">暂无项目</td></tr>';
     container.innerHTML = '<div class="empty-state"><p>暂无项目</p><p>点击「+ 新建项目」开始创建</p></div>';
     return;
   }
@@ -1547,25 +1579,17 @@ function renderProjects() {
     return { p, hasResults, hasDG, routes, groundSum, freightSum, dgSum, combineSum, mainTotal };
   });
 
-  const round2 = v => v != null ? v.toFixed(2) : null;
   const money = v => v != null ? '¥' + Number(v).toLocaleString('zh-CN', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) : '<span class="pt-na">—</span>';
 
-  let html = `<div class="projects-table-wrap"><table class="projects-table">
-  <thead><tr>
-    <th>业务主编号</th><th>主单航司编号</th><th>委托公司名称</th><th>线路</th><th>航班号</th>
-    <th>预计出发时间</th><th>状态</th><th>是否有危险品</th>
-    <th>地面港费用</th><th>航司空运费</th><th>航司危险品费用</th>
-    <th>卸货+危险品<br>(每主单)</th><th>主单总价格</th><th>操作</th>
-  </tr></thead><tbody>`;
-
-  summaries.forEach(({ p, hasResults, hasDG, routes, groundSum, freightSum, dgSum, combineSum, mainTotal }, idx) => {
+  // ═══ Part 1: 总体项目清单表格 ═══
+  let tableHtml = '';
+  summaries.forEach(({ p, hasResults, hasDG, routes, groundSum, freightSum, dgSum, combineSum, mainTotal }) => {
     const pStatus = p.status || '待出发';
     const depTime = p.departureTime ? new Date(p.departureTime).toLocaleString('zh-CN', { year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit' }) : '';
     const dgClass = hasDG ? 'yes' : 'no';
     const dgText = hasDG ? '⚠️ 有' : '✅ 无';
-    const detailId = 'pt-detail-' + p.id;
 
-    html += `<tr class="pt-row" id="pt-row-${p.id}" onclick="toggleProjectRow('${p.id}')">
+    tableHtml += `<tr class="pt-row">
       <td><span class="pt-id">${p.id}</span></td>
       <td><span class="pt-mawb">${p.mawb || '—'}</span></td>
       <td><span class="pt-company" title="${(p.company || '—').replace(/"/g, '&quot;')}">${p.company || '—'}</span></td>
@@ -1579,33 +1603,57 @@ function renderProjects() {
       <td><span class="pt-money">${money(dgSum)}</span></td>
       <td><span class="pt-money">${money(combineSum)}</span></td>
       <td><span class="pt-total">${money(mainTotal)}</span></td>
-      <td><div class="pt-actions" onclick="event.stopPropagation()">
+      <td><div class="pt-actions">
         <button class="pt-btn-edit" onclick="editProject('${p.id}')" title="编辑项目">✏️</button>
         <button class="pt-btn-del" onclick="deleteProject('${p.id}')" title="删除项目">🗑</button>
         <button class="pt-btn-add" onclick="showNewProjectForm()" title="新建项目">➕</button>
       </div></td>
-    </tr>
-    <tr class="pt-detail-row" id="${detailId}">
-      <td colspan="14"><div class="pt-detail-wrap">${hasResults ? renderProjectResults(p) : '<p style="color:var(--slate-400);font-size:13px;text-align:center;padding:20px">尚未计算，点击 ✏️ 编辑后计算报价</p>'}</div></td>
     </tr>`;
   });
+  tbody.innerHTML = tableHtml;
 
-  html += '</tbody></table></div>';
-  container.innerHTML = html;
-}
+  // ═══ Part 2: 项目卡片明细 ═══
+  let cardsHtml = '';
+  summaries.forEach(({ p, hasResults, hasDG, routes, groundSum, freightSum, dgSum, combineSum, mainTotal }) => {
+    const pStatus = p.status || '待出发';
+    const depTime = p.departureTime ? new Date(p.departureTime).toLocaleString('zh-CN', { year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit' }) : '';
+    const totalDisplay = mainTotal != null ? '¥' + Number(mainTotal).toLocaleString('zh-CN', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) : '未计算';
 
-function toggleProjectRow(id) {
-  const row = document.getElementById('pt-row-' + id);
-  const detail = document.getElementById('pt-detail-' + id);
-  if (detail) {
-    detail.classList.toggle('show');
-    row.classList.toggle('expanded');
-  }
+    cardsHtml += `<div class="project-card" id="pj-${p.id}">
+      <div class="pc-header" onclick="toggleProject('${p.id}')">
+        <div class="pc-row pc-row1">
+          <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap">
+            <span class="pc-field"><span class="pc-main-id">${p.id}</span></span>
+            <span class="pc-field"><span class="pc-label-bold">航司编号：</span>${p.mawb||'—'}</span>
+            <span class="pc-field"><span class="pc-label-bold">委托公司：</span>${p.company||'—'}</span>
+            <span class="pc-badge">${totalDisplay}</span>
+          </div>
+          <div class="pc-actions" onclick="event.stopPropagation()">
+            <button class="btn btn-outline" style="font-size:13px;padding:3px 10px" onclick="editProject('${p.id}')">✏️ 编辑</button>
+            <button class="btn btn-danger" style="font-size:13px;padding:3px 10px" onclick="deleteProject('${p.id}')">🗑 删除</button>
+          </div>
+        </div>
+        <div class="pc-row pc-row2">
+          <span class="pc-tag">📍 ${routes||'—'}</span>
+          <span class="pc-tag">✈ ${p.flightNo||'—'}</span>
+          <span class="pc-tag">${hasDG ? '⚠️ 有危险品' : '✅ 无危险品'}</span>
+          ${depTime ? `<span class="pc-tag">🚀 ${depTime}</span>` : ''}
+          <span class="status-badge ${pStatus} pc-status-tag">${statusLabel[pStatus]}</span>
+        </div>
+      </div>
+      ${hasResults ? renderProjectResults(p) : '<div class="pc-body"><p style="color:var(--slate-400);font-size:13px;text-align:center;padding:20px">尚未计算，点击「编辑」后计算报价</p></div>'}
+    </div>`;
+  });
+  container.innerHTML = cardsHtml;
 }
 
 function toggleProject(id) {
-  // 兼容旧调用，转发到 toggleProjectRow
-  toggleProjectRow(id);
+  const body = document.querySelector(`#pj-${id} .pc-body`);
+  const header = document.querySelector(`#pj-${id} .pc-header`);
+  if (body) {
+    body.classList.toggle('show');
+    header.classList.toggle('expanded');
+  }
 }
 
 function renderProjectResults(p) {
