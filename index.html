@@ -736,8 +736,8 @@ textarea.editable-input.header-input{
     <div class="nav-tabs">
       <div class="nav-tab active" onclick="switchTab('tab1')" id="nav-tab1">📋 报价查询表</div>
       <div class="nav-tab" onclick="switchTab('tab2')" id="nav-tab2">📄 空运报价表</div>
+      <div class="nav-tab" onclick="switchTab('tab4')" id="nav-tab4">📊 看板</div>
       <div class="nav-tab" onclick="switchTab('tab3')" id="nav-tab3">⚙️ 权限配置</div>
-      <div class="nav-tab" onclick="switchTab(tab4)" id="nav-tab4">📊 看板</div>
     </div>
     <div class="topbar-right">
       <div class="user-badge">
@@ -1030,6 +1030,30 @@ textarea.editable-input.header-input{
       </div>
     </div>
   </div>
+  <div class="page" id="tab4">
+    <div class="page-header">
+      <div class="page-title">📊 数据看板</div>
+    </div>
+    <div style="padding:20px;display:grid;grid-template-columns:1fr 1fr;gap:20px;">
+      <!-- 状态分布饼图 -->
+      <div style="background:#fff;border-radius:12px;padding:20px;box-shadow:0 1px 3px rgba(0,0,0,0.08);">
+        <div style="font-size:15px;font-weight:700;color:#1e293b;margin-bottom:16px;">项目状态分布</div>
+        <canvas id="chart-status"></canvas>
+      </div>
+      <!-- 应收金额分布柱状图 -->
+      <div style="background:#fff;border-radius:12px;padding:20px;box-shadow:0 1px 3px rgba(0,0,0,0.08);">
+        <div style="font-size:15px;font-weight:700;color:#1e293b;margin-bottom:16px;">月度应收金额（主单总价格）</div>
+        <canvas id="chart-amount"></canvas>
+      </div>
+      <!-- 时间分布图 -->
+      <div style="background:#fff;border-radius:12px;padding:20px;box-shadow:0 1px 3px rgba(0,0,0,0.08);grid-column:1/-1;">
+        <div style="font-size:15px;font-weight:700;color:#1e293b;margin-bottom:16px;">月度项目分布</div>
+        <canvas id="chart-timeline"></canvas>
+      </div>
+    </div>
+  </div>
+
+
 </div>
 
 <!-- ═══════════ 对话框 ═══════════ -->
@@ -1835,7 +1859,6 @@ function renderProjects() {
       <td class="col-actions" onclick="event.stopPropagation()"><div class="pt-actions">
         <button class="pt-btn-edit" onclick="editProjectAndScroll('${p.id}')" title="编辑项目">✏️</button>
         <button class="pt-btn-del" onclick="deleteProject('${p.id}')" title="删除项目">🗑</button>
-        <button class="pt-btn-add" onclick="event.stopPropagation();showNewProjectForm()" title="新建项目">➕</button>
     </tr>`;
   });
   tbody.innerHTML = tableHtml;
@@ -3013,16 +3036,10 @@ init().catch(err => {
 
 // ═══ 看板图表渲染 ═══
 let chartStatus = null, chartAmount = null, chartTimeline = null;
-// ═══ 看板图表渲染 ═══
-let chartStatus = null, chartAmount = null, chartTimeline = null;
 async function renderKanban() {
   if (typeof Chart === 'undefined') { console.warn('Chart.js 未加载'); return; }
-  // 从 localStorage 或 Supabase 加载数据
-  let projects = [];
-  try {
-    const raw = localStorage.getItem('zy_airfreight_projects');
-    projects = raw ? JSON.parse(raw) : [];
-  } catch(e) { projects = []; }
+  // 使用全局 projects 变量（已通过 loadProjects() 加载）
+  // projects 是全局变量，无需重新读取
   
   if (!projects.length) { console.log('暂无项目数据'); return; }
 
@@ -3051,7 +3068,7 @@ async function renderKanban() {
   projects.forEach(p => {
     const t = p.departureTime || '';
     const m = t ? t.slice(0,7) : '未知';
-    const v = parseFloat(p._mainTotal) || 0;
+    const v = parseFloat(p.results?.mainTotal) || 0;
     monthMap[m] = (monthMap[m] || 0) + v;
   });
   const sortedMonths = Object.keys(monthMap).sort();
@@ -3102,28 +3119,6 @@ async function renderKanban() {
 </script>
 
   <!-- ═══ 栏目四：看板 ═══ -->
-  <div class="page" id="tab4">
-    <div class="page-header">
-      <div class="page-title">📊 数据看板</div>
-    </div>
-    <div style="padding:20px;display:grid;grid-template-columns:1fr 1fr;gap:20px;">
-      <!-- 状态分布饼图 -->
-      <div style="background:#fff;border-radius:12px;padding:20px;box-shadow:0 1px 3px rgba(0,0,0,0.08);">
-        <div style="font-size:15px;font-weight:700;color:#1e293b;margin-bottom:16px;">项目状态分布</div>
-        <canvas id="chart-status"></canvas>
-      </div>
-      <!-- 应收金额分布柱状图 -->
-      <div style="background:#fff;border-radius:12px;padding:20px;box-shadow:0 1px 3px rgba(0,0,0,0.08);">
-        <div style="font-size:15px;font-weight:700;color:#1e293b;margin-bottom:16px;">月度应收金额（主单总价格）</div>
-        <canvas id="chart-amount"></canvas>
-      </div>
-      <!-- 时间分布图 -->
-      <div style="background:#fff;border-radius:12px;padding:20px;box-shadow:0 1px 3px rgba(0,0,0,0.08);grid-column:1/-1;">
-        <div style="font-size:15px;font-weight:700;color:#1e293b;margin-bottom:16px;">月度项目分布</div>
-        <canvas id="chart-timeline"></canvas>
-      </div>
-    </div>
-  </div>
 
 </body>
 </html>
